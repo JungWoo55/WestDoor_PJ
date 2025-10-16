@@ -8,9 +8,7 @@ BE/.DS_Store
 FE/.DS_Store
 **/.DS_Store
 # Keep environment variables out of version control
-.env
 BE/.env
-FE/.env
 
 /BE/src/generated/prisma
 
