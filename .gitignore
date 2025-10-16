@@ -1,0 +1,54 @@
+node_modules
+BE/node_modules
+FE/node_modules
+**/node_modules
+
+.DS_Store
+BE/.DS_Store
+FE/.DS_Store
+**/.DS_Store
+# Keep environment variables out of version control
+.env
+BE/.env
+FE/.env
+
+/BE/src/generated/prisma
+
+# Expo
+FE/.expo/
+FE/dist/
+FE/web-build/
+FE/expo-env.d.ts
+
+# Native
+FE/.kotlin/
+FE/*.orig.*
+FE/*.jks
+FE/*.p8
+FE/*.p12
+FE/*.key
+FE/*.mobileprovision
+
+# Metro
+FE/.metro-health-check*
+
+# debug
+FE/npm-debug.*
+FE/yarn-debug.*
+FE/yarn-error.*
+
+# macOS
+FE/.DS_Store
+FE/*.pem
+
+# local env files
+FE/.env*.local
+
+# typescript
+FE/*.tsbuildinfo
+
+FE/app-example
+
+# generated native folders
+FE/ios
+FE/android
