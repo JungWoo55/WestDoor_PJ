@@ -11,6 +11,7 @@ FE/.DS_Store
 BE/.env
 
 /BE/src/generated/prisma
+/BE/prisma/migrations
 
 # Expo
 FE/.expo/
@@ -50,3 +51,6 @@ FE/app-example
 # generated native folders
 FE/ios
 FE/android
+
+# .idea folder --> DataGrip IDE
+/.idea
