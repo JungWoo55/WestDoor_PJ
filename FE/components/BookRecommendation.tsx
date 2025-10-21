@@ -5,8 +5,9 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
   FlatList,
+  TouchableOpacity,
+  Image,
 } from 'react-native';
 import { Button } from './ui/Button';
 import { FontAwesome, AntDesign } from '@expo/vector-icons';
@@ -14,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Book } from '../types';
 import { BookDetailModal } from './BookDetailModal';
 import { Card } from './ui/Card';
+import { Badge } from './ui/Badge';
 
 interface BookRecommendationProps {
   onAddToLibrary: (book: Book) => void;
@@ -47,20 +49,30 @@ export function BookRecommendation({ onAddToLibrary, savedBooks }: BookRecommend
   const renderBookItem = ({ item }: { item: Book }) => {
     const isSaved = savedBooks.includes(item.id);
     return (
-      <Card
-        book={item}
-        onPress={() => handleBookPress(item)}
-        actionButton={
-          <Button
-            size="icon"
-            variant="secondary"
-            style={styles.heartButton}
-            onPress={() => onAddToLibrary(item)}
-          >
-            <AntDesign name="heart" size={16} color={isSaved ? '#ef4444' : '#6b7280'} />
-          </Button>
-        }
-      />
+      <TouchableOpacity onPress={() => handleBookPress(item)}>
+        <Card style={styles.bookCard}>
+          <View style={{ position: 'relative' }}>
+            <Image source={{ uri: item.cover }} style={styles.bookCover} />
+            <Button
+              size="icon"
+              variant="secondary"
+              style={styles.heartButton}
+              onPress={() => onAddToLibrary(item)}
+            >
+              <AntDesign name="heart" size={16} color={isSaved ? '#ef4444' : '#6b7280'} />
+            </Button>
+          </View>
+          <View style={styles.bookInfo}>
+            <Badge variant="secondary" style={{ marginBottom: 8 }}>{item.category}</Badge>
+            <Text style={styles.bookTitle} numberOfLines={1}>{item.title}</Text>
+            <Text style={styles.bookAuthor}>{item.author}</Text>
+            <View style={styles.ratingContainer}>
+              <AntDesign name="star" size={12} color="#facc15" />
+              <Text style={styles.ratingText}>{item.rating}</Text>
+            </View>
+          </View>
+        </Card>
+      </TouchableOpacity>
     );
   };
 
@@ -131,9 +143,4 @@ const styles = StyleSheet.create({
   bookAuthor: { fontSize: 12, color: '#6b7280', marginBottom: 8 },
   ratingContainer: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   ratingText: { fontSize: 12 },
-  genreGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  genreCard: { width: genreCardWidth, borderWidth: 0, borderRadius: 12, overflow: 'hidden' },
-  gradient: { padding: 16, height: 100, justifyContent: 'center' },
-  genreTitle: { fontSize: 16, fontWeight: 'bold', color: '#fff', marginBottom: 8 },
-  genreSubtitle: { fontSize: 14, color: '#fff', opacity: 0.9 },
 });
