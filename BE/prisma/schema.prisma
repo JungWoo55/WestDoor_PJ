@@ -35,7 +35,7 @@ model Book{
   publisher   String  @db.VarChar(255)
   description String? @db.Text 
   page        Int?
-  // categories  String? @db.VarChar(255)
+  main_category  String @db.VarChar(255)
   averageRate Float?
   image       String? @db.VarChar(255)
   authors     String[]
