@@ -8,22 +8,11 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
-  Dimensions,
 } from "react-native";
 import { Feather, AntDesign } from "@expo/vector-icons";
-
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-// Type definitions from the original file
-interface Book {
-  id: number;
-  title: string;
-  author: string;
-  cover: string;
-  rating: number;
-  category: string;
-  description: string;
-}
+import { Book } from '../types';
+import { BookDetailModal } from "./BookDetailModal";
 
 interface BookSearchProps {
   onAddToLibrary: (book: Book) => void;
@@ -33,6 +22,15 @@ interface BookSearchProps {
 export function BookSearch({ onAddToLibrary, savedBooks }: BookSearchProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const insets = useSafeAreaInsets();
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+
+  const handleBookPress = (book: Book) => {
+    setSelectedBook(book);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedBook(null);
+  };
 
   // Data from the original file
   const bestsellerBooks: Book[] = [
@@ -74,78 +72,90 @@ export function BookSearch({ onAddToLibrary, savedBooks }: BookSearchProps) {
     : bestsellerBooks;
 
   return (
-    <ScrollView style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.searchBarContainer}>
-        <View style={styles.searchInputWrapper}>
-          <Feather name="search" size={16} color="#6b7280" style={styles.searchIcon} />
-          <TextInput
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="책 제목이나 저자를 검색하세요"
-            placeholderTextColor="#6b7280"
-            style={styles.searchInput}
-          />
-        </View>
-      </View>
-
-      <View style={styles.contentContainer}>
-        <View style={styles.sectionHeader}>
-          <Feather name="trending-up" size={20} color="#16a34a" />
-          <Text style={styles.sectionTitle}>베스트셀러</Text>
-        </View>
-
-        <View style={styles.bookList}>
-          {filteredBooks.map((book, index) => {
-            const isSaved = savedBooks.includes(book.id);
-            return (
-              <View key={book.id} style={styles.card}>
-                <View style={styles.bookContent}>
-                  <View style={styles.coverWrapper}>
-                    <Image source={{ uri: book.cover }} style={styles.coverImage} />
-                    <View style={styles.rankBadge}>
-                      <Text style={styles.rankText}>{index + 1}</Text>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.bookInfo}>
-                    <View style={styles.bookHeader}>
-                      <View style={styles.bookTitleWrapper}>
-                        <Text style={styles.bookTitle} numberOfLines={1}>{book.title}</Text>
-                        <Text style={styles.bookAuthor} numberOfLines={1}>{book.author}</Text>
-                      </View>
-                      <TouchableOpacity onPress={() => onAddToLibrary(book)} style={styles.heartButton}>
-                        <AntDesign name="heart" size={16} color={isSaved ? '#ef4444' : '#6b7280'} />
-                      </TouchableOpacity>
-                    </View>
-                    
-                    <View style={styles.categoryBadge}>
-                      <Text style={styles.categoryText}>{book.category}</Text>
-                    </View>
-                    
-                    <Text style={styles.description} numberOfLines={2}>
-                      {book.description}
-                    </Text>
-                    
-                    <View style={styles.ratingContainer}>
-                      <AntDesign name="star" size={12} color="#facc15" />
-                      <Text style={styles.ratingText}>{book.rating}</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            );
-          })}
-        </View>
-
-        {filteredBooks.length === 0 && (
-          <View style={styles.noResults}>
-            <Text style={styles.noResultsText}>검색 결과가 없습니다</Text>
+    <>
+      <ScrollView style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.searchBarContainer}>
+          <View style={styles.searchInputWrapper}>
+            <Feather name="search" size={16} color="#6b7280" style={styles.searchIcon} />
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="책 제목이나 저자를 검색하세요"
+              placeholderTextColor="#6b7280"
+              style={styles.searchInput}
+            />
           </View>
-        )}
-      </View>
-    </ScrollView>
+        </View>
+
+        <View style={styles.contentContainer}>
+          <View style={styles.sectionHeader}>
+            <Feather name="trending-up" size={20} color="#16a34a" />
+            <Text style={styles.sectionTitle}>베스트셀러</Text>
+          </View>
+
+          <View style={styles.bookList}>
+            {filteredBooks.map((book, index) => {
+              const isSaved = savedBooks.includes(book.id);
+              return (
+                <TouchableOpacity key={book.id} onPress={() => handleBookPress(book)}>
+                  <View style={styles.card}>
+                    <View style={styles.bookContent}>
+                      <View style={styles.coverWrapper}>
+                        <Image source={{ uri: book.cover }} style={styles.coverImage} />
+                        <View style={styles.rankBadge}>
+                          <Text style={styles.rankText}>{index + 1}</Text>
+                        </View>
+                      </View>
+                      
+                      <View style={styles.bookInfo}>
+                        <View style={styles.bookHeader}>
+                          <View style={styles.bookTitleWrapper}>
+                            <Text style={styles.bookTitle} numberOfLines={1}>{book.title}</Text>
+                            <Text style={styles.bookAuthor} numberOfLines={1}>{book.author}</Text>
+                          </View>
+                          <TouchableOpacity onPress={() => onAddToLibrary(book)} style={styles.heartButton}>
+                            <AntDesign name="heart" size={16} color={isSaved ? '#ef4444' : '#6b7280'} />
+                          </TouchableOpacity>
+                        </View>
+                        
+                        <View style={styles.categoryBadge}>
+                          <Text style={styles.categoryText}>{book.category}</Text>
+                        </View>
+                        
+                        <Text style={styles.description} numberOfLines={2}>
+                          {book.description}
+                        </Text>
+                        
+                        <View style={styles.ratingContainer}>
+                          <AntDesign name="star" size={12} color="#facc15" />
+                          <Text style={styles.ratingText}>{book.rating}</Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {filteredBooks.length === 0 && (
+            <View style={styles.noResults}>
+              <Text style={styles.noResultsText}>검색 결과가 없습니다</Text>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+      <BookDetailModal
+        visible={!!selectedBook}
+        book={selectedBook}
+        onClose={handleCloseModal}
+        onAddToLibrary={onAddToLibrary}
+        isSaved={selectedBook ? savedBooks.includes(selectedBook.id) : false}
+      />
+    </>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

@@ -1,18 +1,7 @@
 
 import React, { createContext, ReactNode, useContext, useState } from 'react';
 import { Alert } from 'react-native';
-
-// Define the Book type globally for the context
-interface Book {
-  id: number;
-  title: string;
-  author: string;
-  cover: string;
-  rating: number;
-  category: string;
-  description?: string;
-}
-
+import { Book } from '../types';
 // Define the context shape
 interface BookContextType {
   savedBooks: Book[];

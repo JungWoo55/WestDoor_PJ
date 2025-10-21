@@ -3,10 +3,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -15,7 +13,6 @@ import { Input } from './ui/Input';
 import { Card } from './ui/Card';
 import { Avatar } from './ui/Avatar';
 import { Feather, FontAwesome5, Ionicons } from '@expo/vector-icons';
-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Message {

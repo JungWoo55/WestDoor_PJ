@@ -1,4 +1,3 @@
-
 import { Stack } from "expo-router";
 import { BookProvider } from "../contexts/BookContext";
 
@@ -11,4 +10,3 @@ export default function RootLayout() {
     </BookProvider>
   );
 }
-

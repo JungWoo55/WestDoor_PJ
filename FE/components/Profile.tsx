@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Card } from './ui/Card';
@@ -6,9 +5,7 @@ import { Button } from './ui/Button';
 import { Avatar } from './ui/Avatar';
 import { Badge } from './ui/Badge';
 import { Separator } from './ui/Separator';
-import { Feather, FontAwesome5, MaterialIcons, Ionicons } from '@expo/vector-icons';
-
-
+import { Feather, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function Profile() {
@@ -16,7 +13,6 @@ export function Profile() {
   const userStats = [
     { label: "읽은 책", value: "24권", icon: () => <FontAwesome5 name="book-open" size={20} color="#16a34a" /> },
     { label: "독서 목표", value: "80%", icon: () => <Feather name="target" size={20} color="#16a34a" /> },
-    { label: "획득 배지", value: "12개", icon: () => <FontAwesome5 name="award" size={20} color="#16a34a" /> }
   ];
 
   const menuItems = [
@@ -81,7 +77,7 @@ export function Profile() {
               </View>
               <MaterialIcons name="chevron-right" size={24} color="#9ca3af" />
             </TouchableOpacity>
-            {index < menuItems.length - 1 && <Separator style={{ marginHorizontal: 16 }} />}
+            {index < menuItems.length - 1 && <Separator style={{ marginHorizontal: 16 }} />} 
           </React.Fragment>
         ))}
       </Card>
@@ -92,7 +88,6 @@ export function Profile() {
     </ScrollView>
   );
 }
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', padding: 16 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },

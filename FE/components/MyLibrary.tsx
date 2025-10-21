@@ -1,23 +1,14 @@
 
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Dimensions } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, Dimensions, TouchableOpacity } from 'react-native';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { FontAwesome, Feather, AntDesign } from '@expo/vector-icons';
-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-// Copied from BookSearch.tsx - should be in a central types file
-interface Book {
-  id: number;
-  title: string;
-  author: string;
-  cover: string;
-  rating: number;
-  category: string;
-}
+import { Book } from '../types';
+import { BookDetailModal } from './BookDetailModal';
 
 interface MyLibraryProps {
   savedBooks: Book[];
@@ -30,6 +21,16 @@ const cardWidth = (width - 3 * cardGap - 2 * 16) / 2; // 2 cards per row, with g
 
 export function MyLibrary({ savedBooks, onRemoveFromLibrary }: MyLibraryProps) {
   const insets = useSafeAreaInsets();
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+
+  const handleBookPress = (book: Book) => {
+    setSelectedBook(book);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedBook(null);
+  };
+
   // This logic is from the original file
   const readingList = savedBooks.filter(book => [1, 2, 7, 8].includes(book.id));
   const recommendedList = savedBooks.filter(book => ![1, 2, 7, 8].includes(book.id));
@@ -47,55 +48,66 @@ export function MyLibrary({ savedBooks, onRemoveFromLibrary }: MyLibraryProps) {
     return (
       <View style={styles.bookGrid}>
         {books.map((book) => (
-          <Card key={book.id} style={styles.bookCard}>
-            <View style={{ position: 'relative' }}>
-              <Image source={{ uri: book.cover }} style={styles.bookCover} />
-              <Button
-                size="icon"
-                variant="destructive"
-                style={styles.deleteButton}
-                onPress={() => onRemoveFromLibrary(book.id)}
-              >
-                <Feather name="trash-2" size={16} color="white" />
-              </Button>
-            </View>
-            <View style={styles.bookInfo}>
-              <Badge variant="secondary" style={{ marginBottom: 8 }}>
-                {book.category}
-              </Badge>
-              <Text style={styles.bookTitle} numberOfLines={2}>{book.title}</Text>
-              <Text style={styles.bookAuthor}>{book.author}</Text>
-              <View style={styles.ratingContainer}>
-                <AntDesign name="star" size={12} color="#facc15" />
-                <Text style={styles.ratingText}>{book.rating}</Text>
+          <TouchableOpacity key={book.id} onPress={() => handleBookPress(book)}>
+            <Card style={styles.bookCard}>
+              <View style={{ position: 'relative' }}>
+                <Image source={{ uri: book.cover }} style={styles.bookCover} />
+                <Button
+                  size="icon"
+                  variant="destructive"
+                  style={styles.deleteButton}
+                  onPress={() => onRemoveFromLibrary(book.id)}
+                >
+                  <Feather name="trash-2" size={16} color="white" />
+                </Button>
               </View>
-            </View>
-          </Card>
+              <View style={styles.bookInfo}>
+                <Badge variant="secondary" style={{ marginBottom: 8 }}>
+                  {book.category}
+                </Badge>
+                <Text style={styles.bookTitle} numberOfLines={2}>{book.title}</Text>
+                <Text style={styles.bookAuthor}>{book.author}</Text>
+                <View style={styles.ratingContainer}>
+                  <AntDesign name="star" size={12} color="#facc15" />
+                  <Text style={styles.ratingText}>{book.rating}</Text>
+                </View>
+              </View>
+            </Card>
+          </TouchableOpacity>
         ))}
       </View>
     );
   };
 
   return (
-    <ScrollView style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <FontAwesome name="bookmark" size={20} color="#16a34a" />
-        <Text style={styles.headerTitle}>내 서재</Text>
-      </View>
+    <>
+      <ScrollView style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <FontAwesome name="bookmark" size={20} color="#16a34a" />
+          <Text style={styles.headerTitle}>내 서재</Text>
+        </View>
 
-      <Tabs defaultValue="reading" style={styles.tabsContainer}>
-        <TabsList>
-          <TabsTrigger value="reading">{`읽을 책 (${readingList.length})`}</TabsTrigger>
-          <TabsTrigger value="recommended">{`추천받은 책 (${recommendedList.length})`}</TabsTrigger>
-        </TabsList>
-        <TabsContent value="reading">
-          {renderBookList(readingList)}
-        </TabsContent>
-        <TabsContent value="recommended">
-          {renderBookList(recommendedList)}
-        </TabsContent>
-      </Tabs>
-    </ScrollView>
+        <Tabs defaultValue="reading" style={styles.tabsContainer}>
+          <TabsList>
+            <TabsTrigger value="reading">{`읽을 책 (${readingList.length})`}</TabsTrigger>
+            <TabsTrigger value="recommended">{`추천받은 책 (${recommendedList.length})`}</TabsTrigger>
+          </TabsList>
+          <TabsContent value="reading">
+            {renderBookList(readingList)}
+          </TabsContent>
+          <TabsContent value="recommended">
+            {renderBookList(recommendedList)}
+          </TabsContent>
+        </Tabs>
+      </ScrollView>
+      <BookDetailModal
+        visible={!!selectedBook}
+        book={selectedBook}
+        onClose={handleCloseModal}
+        onAddToLibrary={() => selectedBook && onRemoveFromLibrary(selectedBook.id)}
+        isSaved={true}
+      />
+    </>
   );
 }
 
