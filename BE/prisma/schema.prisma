@@ -15,7 +15,89 @@ datasource db {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+  id                      Int                       @id @default(autoincrement())
+  email                   String                    @unique(map: "email") @db.VarChar(40)
+  password                String                    @db.VarChar(60)
+  nickname                String?                   @db.VarChar(10)
+  createdAt               DateTime                  @default(now()) @map("created_at")
+  updatedAt               DateTime?                 @updatedAt @map("updated_at")
+  isCompleted             Boolean                   @default(false) @map("is_completed")
+
+  surveys   Survey[]
+  libraries Library[]
+
+  @@map("유저")
 }
+
+model Book{
+  isbn        String  @id
+  title       String  @db.VarChar(255)
+  publisher   String  @db.VarChar(255)
+  description String? @db.Text 
+  page        Int?
+  // categories  String? @db.VarChar(255)
+  averageRate Float?
+  image       String? @db.VarChar(255)
+  authors     String[]
+  categories  String[]
+
+  // Relations
+  // authors         Author[]
+  libraries       Library[]
+  // categoryEntries Category[]
+
+  @@map("책")
+}
+
+model Survey {
+  id       Int     @id @default(autoincrement())
+  userId   Int     @map("user_id")
+  amount   Int?    @map("amount") 
+  genre    String[] 
+  category String[] 
+
+  // Relation
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  //@@id([id, userId])
+  @@map("설문")
+}
+
+model Library{
+  id      Int     @id @default(autoincrement())
+  userId  Int     @map("user_id")
+  isbn    String
+  isRead  Boolean? @map("is_read")
+  isRecom Boolean? @map("is_recom")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [isbn], references: [isbn], onDelete: Cascade)
+
+  //@@id([id, userId, isbn])
+  @@map("서재")
+}
+
+// model Author {
+//  id     Int
+//  isbn   String
+//  author String? @db.VarChar(255)
+
+  // Relation
+//  book Book @relation(fields: [isbn], references: [isbn], onDelete: Cascade)
+
+//  @@id([id, isbn])
+//  @@map("저자")
+// }
+
+// model Category{
+//  id      Int     @id @default(autoincrement())
+//  isbn    String  
+//  category String?  @db.VarChar(255)
+
+  // Relations
+//  book Book @relation(fields: [isbn], references: [isbn], onDelete: Cascade)
+
+//  @@id([id, isbn])
+//  @@map("카테고리")
+//}
