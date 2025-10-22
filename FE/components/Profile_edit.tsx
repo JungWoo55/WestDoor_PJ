@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ScrollView,
   View,
@@ -15,36 +15,40 @@ import { Input } from './ui/Input';
 import { Separator } from './ui/Separator';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-// 가상의 현재 사용자 정보
-const currentUser = {
-  email: 'bookworm@example.com',
-  nickname: '독서광',
-  bio: '책 읽는 것을 좋아합니다.',
-  favoriteGenres: ['소설', '자기계발'],
-  readingGoal: 50,
-};
+import { useBooks } from '../contexts/BookContext'; // 컨텍스트 훅 임포트
 
 const allGenres = ["소설", "자기계발", "에세이", "과학", "역사", "IT/기술", "경제", "인문"];
 
 export function Profile_edit() {
   const insets = useSafeAreaInsets();
+  const { userProfile, updateUserProfile } = useBooks();
 
-  // 수정 가능한 상태들
-  const [nickname, setNickname] = useState(currentUser.nickname);
-  const [bio, setBio] = useState(currentUser.bio);
-  const [selectedGenres, setSelectedGenres] = useState(currentUser.favoriteGenres);
-  const [readingGoal, setReadingGoal] = useState(currentUser.readingGoal.toString());
+  // 컨텍스트의 userProfile로 내부 상태 초기화
+  const [nickname, setNickname] = useState(userProfile?.nickname || '');
+  const [bio, setBio] = useState(userProfile?.bio || '');
+  const [selectedGenres, setSelectedGenres] = useState(userProfile?.favoriteGenres || []);
+  const [readingGoal, setReadingGoal] = useState(userProfile?.readingGoal.toString() || '0');
 
-  // 변경 여부 확인 (저장 버튼 활성화용)
+  // 컨텍스트의 프로필이 변경될 때 상태를 동기화 (선택적)
+  useEffect(() => {
+    if (userProfile) {
+      setNickname(userProfile.nickname);
+      setBio(userProfile.bio);
+      setSelectedGenres(userProfile.favoriteGenres);
+      setReadingGoal(userProfile.readingGoal.toString());
+    }
+  }, [userProfile]);
+
+  // 변경 여부 확인
   const isChanged = useMemo(() => {
+    if (!userProfile) return false;
     return (
-      nickname !== currentUser.nickname ||
-      bio !== currentUser.bio ||
-      readingGoal !== currentUser.readingGoal.toString() ||
-      JSON.stringify(selectedGenres.sort()) !== JSON.stringify(currentUser.favoriteGenres.sort())
+      nickname !== userProfile.nickname ||
+      bio !== userProfile.bio ||
+      readingGoal !== userProfile.readingGoal.toString() ||
+      JSON.stringify(selectedGenres.sort()) !== JSON.stringify(userProfile.favoriteGenres.sort())
     );
-  }, [nickname, bio, readingGoal, selectedGenres]);
+  }, [nickname, bio, readingGoal, selectedGenres, userProfile]);
 
   const handleGenreToggle = (genre: string) => {
     setSelectedGenres((prev) =>
@@ -52,16 +56,24 @@ export function Profile_edit() {
     );
   };
 
+  const handleSave = () => {
+    const newProfile = {
+      nickname,
+      bio,
+      favoriteGenres: selectedGenres,
+      readingGoal: parseInt(readingGoal, 10) || 0,
+    };
+    updateUserProfile(newProfile);
+    Alert.alert("저장 완료", "프로필 정보가 성공적으로 업데이트되었습니다.");
+  };
+
+  // ... (나머지 핸들러 함수들은 동일) ...
   const handleImagePicker = () => {
-    // TODO: 이미지 피커 라이브러리 연동 (e.g., expo-image-picker)
     Alert.alert("프로필 사진 변경", "이미지 라이브러리를 여는 기능이 여기에 추가됩니다.");
   };
-
   const handlePasswordChange = () => {
-    // TODO: 비밀번호 변경 화면으로 이동
     Alert.alert("비밀번호 변경", "비밀번호 변경 화면으로 이동하는 기능이 여기에 추가됩니다.");
   };
-
   const handleAccountDelete = () => {
     Alert.alert(
       "회원 탈퇴",
@@ -73,11 +85,9 @@ export function Profile_edit() {
     );
   };
 
-  const handleSave = () => {
-    // TODO: 변경된 정보를 서버에 저장하는 API 호출
-    console.log({ nickname, bio, selectedGenres, readingGoal });
-    Alert.alert("저장 완료", "프로필 정보가 성공적으로 업데이트되었습니다.");
-  };
+  if (!userProfile) {
+    return <Text>프로필 정보를 불러오는 중입니다...</Text>;
+  }
 
   return (
     <ScrollView style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
@@ -140,7 +150,7 @@ export function Profile_edit() {
         <Text style={styles.cardTitle}>계정 관리</Text>
         <View style={styles.inputGroup}>
           <Text style={styles.label}>이메일 주소</Text>
-          <Text style={styles.emailText}>{currentUser.email}</Text>
+          <Text style={styles.emailText}>{userProfile.email}</Text>
         </View>
         <Separator style={{ marginVertical: 16 }} />
         <TouchableOpacity onPress={handlePasswordChange} style={styles.menuItem}>

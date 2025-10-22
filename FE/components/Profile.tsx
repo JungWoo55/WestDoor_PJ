@@ -7,15 +7,27 @@ import { Badge } from './ui/Badge';
 import { Separator } from './ui/Separator';
 import { Feather, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 import { useRouter } from 'expo-router';
+import { useBooks } from '../contexts/BookContext'; // 컨텍스트 훅 임포트
 
 export function Profile() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { userProfile, savedBooks } = useBooks();
+
+  // 프로필 정보가 없을 경우 로딩 또는 에러 처리
+  if (!userProfile) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text>프로필 정보를 불러오지 못했습니다.</Text>
+      </View>
+    );
+  }
+
+  // 동적으로 계산되는 통계
   const userStats = [
-    { label: "읽은 책", value: "24권", icon: () => <FontAwesome5 name="book-open" size={20} color="#16a34a" /> },
-    { label: "독서 목표", value: "80%", icon: () => <Feather name="target" size={20} color="#16a34a" /> },
+    { label: "읽은 책", value: `${savedBooks.length}권` },
+    { label: "독서 목표", value: `${userProfile.readingGoal > 0 ? Math.round((savedBooks.length / userProfile.readingGoal) * 100) : 0}%` },
   ];
 
   const menuItems = [
@@ -38,8 +50,8 @@ export function Profile() {
             <Feather name="user" size={40} color="white" />
           </Avatar>
           <View style={{ flex: 1 }}>
-            <Text style={styles.profileName}>독서광</Text>
-            <Text style={styles.profileEmail}>bookworm@example.com</Text>
+            <Text style={styles.profileName}>{userProfile.nickname}</Text>
+            <Text style={styles.profileEmail}>{userProfile.email}</Text>
             <Badge variant="secondary">레벨 5 독서가</Badge>
           </View>
         </View>
@@ -51,7 +63,7 @@ export function Profile() {
         <View style={styles.statsContainer}>
           {userStats.map((stat, index) => (
             <View key={index} style={styles.statItem}>
-              <View style={styles.statIconContainer}>{stat.icon()}</View>
+              <FontAwesome5 name="book-open" size={20} color="#16a34a" />
               <Text style={styles.statValue}>{stat.value}</Text>
               <Text style={styles.statLabel}>{stat.label}</Text>
             </View>
@@ -62,9 +74,13 @@ export function Profile() {
       <Card style={styles.card}>
         <Text style={styles.cardTitle}>선호 장르</Text>
         <View style={styles.genresContainer}>
-          {["소설", "자기계발", "에세이", "과학", "역사", "IT/기술"].map((genre) => (
-            <Badge key={genre} variant="outline">{genre}</Badge>
-          ))}
+          {userProfile.favoriteGenres.length > 0 ? (
+            userProfile.favoriteGenres.map((genre) => (
+              <Badge key={genre} variant="outline">{genre}</Badge>
+            ))
+          ) : (
+            <Text style={styles.noGenresText}>선호하는 장르가 없습니다.</Text>
+          )}
         </View>
       </Card>
 
@@ -102,11 +118,11 @@ const styles = StyleSheet.create({
   profileName: { fontSize: 20, fontWeight: 'bold', marginBottom: 4 },
   profileEmail: { fontSize: 14, color: '#6b7280', marginBottom: 8 },
   statsContainer: { flexDirection: 'row', justifyContent: 'space-around', gap: 16 },
-  statItem: { alignItems: 'center', gap: 4 },
-  statIconContainer: { height: 48, width: 48, borderRadius: 24, backgroundColor: 'rgba(22, 163, 74, 0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  statItem: { alignItems: 'center', gap: 8 },
   statValue: { fontSize: 16, fontWeight: 'bold' },
   statLabel: { fontSize: 12, color: '#6b7280' },
   genresContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  noGenresText: { color: '#9ca3af' },
   menuItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 },
   menuItemContent: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   menuItemLabel: { fontSize: 16 },

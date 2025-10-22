@@ -1,19 +1,13 @@
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Dimensions, TouchableOpacity } from 'react-native';
-import { Card } from './ui/Card';
-import { Button } from './ui/Button';
-import { Badge } from './ui/Badge';
-import { FontAwesome, Feather, AntDesign } from '@expo/vector-icons';
+import { View, Text, StyleSheet, FlatList } from 'react-native'; // FlatList, ScrollView 제거
+import { FontAwesome } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Book } from '../types';
 import { BookDetailModal } from './BookDetailModal';
 import { useBooks } from '../contexts/BookContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs'; // Tabs 임포트
-
-const { width } = Dimensions.get('window');
-const cardGap = 12;
-const cardWidth = (width - 3 * cardGap - 2 * 16) / 2;
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
+import { BookItem } from './BookItem';
 
 export function MyLibrary() {
   const insets = useSafeAreaInsets();
@@ -33,60 +27,31 @@ export function MyLibrary() {
   // 추천받은 책 목록은 비워둡니다. 향후 로직 구현이 필요합니다.
   const recommendedList: Book[] = [];
 
-  const renderBookList = (books: Book[], emptyMessage: string) => {
-    if (books.length === 0) {
-      return (
+  const renderBookList = (books: Book[], emptyMessage: string) => (
+    <FlatList
+      data={books}
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={styles.listContentContainer}
+      renderItem={({ item }) => (
+        <BookItem
+          book={item}
+          isSaved={true} // 내 서재에 있는 책이므로 항상 true
+          onPress={() => handleBookPress(item)}
+          onToggleSave={addToLibrary} // 컨텍스트의 토글 함수 사용
+        />
+      )}
+      ListEmptyComponent={() => (
         <View style={styles.emptyContainer}>
           <FontAwesome name="bookmark-o" size={48} color="#9ca3af" />
           <Text style={styles.emptyText}>{emptyMessage}</Text>
         </View>
-      );
-    }
-
-    return (
-      <View style={styles.bookGrid}>
-        {books.map((book) => {
-          const coverImage = book.volumeInfo.imageLinks?.thumbnail || 'https://via.placeholder.com/150x220.png?text=No+Image';
-          return (
-            <TouchableOpacity key={book.id} onPress={() => handleBookPress(book)}>
-              <Card style={styles.bookCard}>
-                <View style={{ position: 'relative' }}>
-                  <Image source={{ uri: coverImage }} style={styles.bookCover} />
-                  <Button
-                    size="icon"
-                    variant="destructive"
-                    style={styles.deleteButton}
-                    onPress={() => addToLibrary(book)}
-                  >
-                    <Feather name="trash-2" size={16} color="white" />
-                  </Button>
-                </View>
-                <View style={styles.bookInfo}>
-                  {book.volumeInfo.categories?.[0] && 
-                    <Badge variant="secondary" style={{ marginBottom: 8 }}>
-                      {book.volumeInfo.categories[0]}
-                    </Badge>
-                  }
-                  <Text style={styles.bookTitle} numberOfLines={2}>{book.volumeInfo.title}</Text>
-                  <Text style={styles.bookAuthor}>{book.volumeInfo.authors?.join(', ')}</Text>
-                  {book.volumeInfo.averageRating &&
-                    <View style={styles.ratingContainer}>
-                      <AntDesign name="star" size={12} color="#facc15" />
-                      <Text style={styles.ratingText}>{book.volumeInfo.averageRating}</Text>
-                    </View>
-                  }
-                </View>
-              </Card>
-            </TouchableOpacity>
-          )
-        })}
-      </View>
-    );
-  };
+      )}
+    />
+  );
 
   return (
     <>
-      <ScrollView style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <FontAwesome name="bookmark" size={20} color="#16a34a" />
           <Text style={styles.headerTitle}>내 서재</Text>
@@ -105,7 +70,7 @@ export function MyLibrary() {
           </TabsContent>
         </Tabs>
 
-      </ScrollView>
+      </View>
       <BookDetailModal
         visible={!!selectedBook}
         book={selectedBook}
@@ -121,21 +86,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingHorizontal: 16,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingTop: 16, // Adjusted padding
+    paddingTop: 16,
     paddingBottom: 16,
+    paddingHorizontal: 16,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
   },
   tabsContainer: {
-    width: '100%',
+    flex: 1, // 탭 컨텐츠가 남은 공간을 모두 차지하도록
+    paddingHorizontal: 16,
+  },
+  listContentContainer: {
+    paddingTop: 16,
+    paddingBottom: 32,
+    gap: 12, // 아이템 사이의 간격
   },
   emptyContainer: {
     paddingVertical: 64,
@@ -146,51 +117,5 @@ const styles = StyleSheet.create({
     color: '#374151',
     fontSize: 18,
     fontWeight: 'bold',
-  },
-  bookGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: cardGap,
-    marginTop: 16,
-    paddingBottom: 32,
-  },
-  bookCard: {
-    width: cardWidth,
-    overflow: 'hidden',
-    padding: 0,
-  },
-  bookCover: {
-    width: '100%',
-    height: 180,
-    backgroundColor: '#f3f4f6',
-  },
-  deleteButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    height: 32,
-    width: 32,
-    borderRadius: 16,
-  },
-  bookInfo: {
-    padding: 12,
-    gap: 4,
-  },
-  bookTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    minHeight: 34,
-  },
-  bookAuthor: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  ratingText: {
-    fontSize: 12,
   },
 });

@@ -3,20 +3,41 @@ import React, { createContext, ReactNode, useContext, useState } from 'react';
 import { Alert } from 'react-native';
 import { Book } from '../types';
 
-// 컨텍스트 타입 정의: id 관련 타입을 string으로 변경
+// 프로필 정보 타입 정의
+export interface UserProfile {
+  email: string;
+  nickname: string;
+  bio: string;
+  favoriteGenres: string[];
+  readingGoal: number;
+}
+
+// 컨텍스트 타입 정의
 interface BookContextType {
   savedBooks: Book[];
   savedBookIds: string[];
   addToLibrary: (book: Book) => void;
   removeFromLibrary: (bookId: string) => void;
+  userProfile: UserProfile | null;
+  updateUserProfile: (profile: Partial<UserProfile>) => void;
 }
 
 // 컨텍스트 생성
 const BookContext = createContext<BookContextType | undefined>(undefined);
 
+// 가상의 초기 프로필 정보
+const initialProfile: UserProfile = {
+  email: 'bookworm@example.com',
+  nickname: '독서광',
+  bio: '책 읽는 것을 좋아합니다.',
+  favoriteGenres: ['소설', '자기계발'],
+  readingGoal: 50,
+};
+
 // 프로바이더 컴포넌트 생성
 export const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [savedBooks, setSavedBooks] = useState<Book[]>([]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(initialProfile);
 
   const addToLibrary = (book: Book) => {
     setSavedBooks((prev) => {
@@ -33,16 +54,18 @@ export const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   };
 
-  // removeFromLibrary의 파라미터 타입을 string으로 변경
   const removeFromLibrary = (bookId: string) => {
     setSavedBooks((prev) => prev.filter((book) => book.id !== bookId));
   };
 
-  // book.id가 string이므로, map의 결과는 string[]이 됨
+  const updateUserProfile = (profileUpdates: Partial<UserProfile>) => {
+    setUserProfile(prev => prev ? { ...prev, ...profileUpdates } : null);
+  };
+
   const savedBookIds = savedBooks.map((book) => book.id);
 
   return (
-    <BookContext.Provider value={{ savedBooks, savedBookIds, addToLibrary, removeFromLibrary }}>
+    <BookContext.Provider value={{ savedBooks, savedBookIds, addToLibrary, removeFromLibrary, userProfile, updateUserProfile }}>
       {children}
     </BookContext.Provider>
   );

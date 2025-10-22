@@ -27,6 +27,9 @@ expo-env.d.ts 파일 만들기
 npm install
 npm install axios
 
+.env 파일 만들기
+EXPO_PUBLIC_BOOKS_API_KEY=API 키
+
 ### 프론트 실행
 npm start
 
