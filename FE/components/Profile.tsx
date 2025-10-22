@@ -8,7 +8,10 @@ import { Separator } from './ui/Separator';
 import { Feather, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useRouter } from 'expo-router';
+
 export function Profile() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const userStats = [
     { label: "읽은 책", value: "24권", icon: () => <FontAwesome5 name="book-open" size={20} color="#16a34a" /> },
@@ -40,7 +43,7 @@ export function Profile() {
             <Badge variant="secondary">레벨 5 독서가</Badge>
           </View>
         </View>
-        <Button variant="outline">프로필 수정</Button>
+        <Button variant="outline" onPress={() => router.push('/profile-edit')}>프로필 수정</Button>
       </Card>
 
       <Card style={styles.card}>

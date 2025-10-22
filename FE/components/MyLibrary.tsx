@@ -8,17 +8,16 @@ import { FontAwesome, Feather, AntDesign } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Book } from '../types';
 import { BookDetailModal } from './BookDetailModal';
-import { useBooks } from '../contexts/BookContext'; // useBooks 훅 임포트
+import { useBooks } from '../contexts/BookContext';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs'; // Tabs 임포트
 
 const { width } = Dimensions.get('window');
 const cardGap = 12;
-const cardWidth = (width - 3 * cardGap - 2 * 16) / 2; // 2 cards per row, with gaps and padding
+const cardWidth = (width - 3 * cardGap - 2 * 16) / 2;
 
 export function MyLibrary() {
   const insets = useSafeAreaInsets();
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
-
-  // useBooks 훅을 통해 컨텍스트 값 사용
   const { savedBooks, addToLibrary, savedBookIds } = useBooks();
 
   const handleBookPress = (book: Book) => {
@@ -29,13 +28,17 @@ export function MyLibrary() {
     setSelectedBook(null);
   };
 
-  const renderBookList = (books: Book[]) => {
+  // 현재는 모든 책을 '읽을 책'으로 간주합니다.
+  const readingList = savedBooks;
+  // 추천받은 책 목록은 비워둡니다. 향후 로직 구현이 필요합니다.
+  const recommendedList: Book[] = [];
+
+  const renderBookList = (books: Book[], emptyMessage: string) => {
     if (books.length === 0) {
       return (
         <View style={styles.emptyContainer}>
           <FontAwesome name="bookmark-o" size={48} color="#9ca3af" />
-          <Text style={styles.emptyText}>아직 서재에 저장된 책이 없습니다</Text>
-          <Text style={styles.emptySubText}>검색 탭에서 원하는 책을 추가해보세요.</Text>
+          <Text style={styles.emptyText}>{emptyMessage}</Text>
         </View>
       );
     }
@@ -53,7 +56,7 @@ export function MyLibrary() {
                     size="icon"
                     variant="destructive"
                     style={styles.deleteButton}
-                    onPress={() => addToLibrary(book)} // 토글 함수 사용
+                    onPress={() => addToLibrary(book)}
                   >
                     <Feather name="trash-2" size={16} color="white" />
                   </Button>
@@ -88,15 +91,26 @@ export function MyLibrary() {
           <FontAwesome name="bookmark" size={20} color="#16a34a" />
           <Text style={styles.headerTitle}>내 서재</Text>
         </View>
-        <View style={styles.contentContainer}>
-          {renderBookList(savedBooks)}
-        </View>
+        
+        <Tabs defaultValue="reading" style={styles.tabsContainer}>
+          <TabsList>
+            <TabsTrigger value="reading">{`읽을 책 (${readingList.length})`}</TabsTrigger>
+            <TabsTrigger value="recommended">{`추천받은 책 (${recommendedList.length})`}</TabsTrigger>
+          </TabsList>
+          <TabsContent value="reading">
+            {renderBookList(readingList, "서재에 저장된 책이 없습니다.")}
+          </TabsContent>
+          <TabsContent value="recommended">
+            {renderBookList(recommendedList, "추천받아 저장한 책이 없습니다.")}
+          </TabsContent>
+        </Tabs>
+
       </ScrollView>
       <BookDetailModal
         visible={!!selectedBook}
         book={selectedBook}
         onClose={handleCloseModal}
-        onAddToLibrary={addToLibrary} // 컨텍스트의 토글 함수 전달
+        onAddToLibrary={addToLibrary}
         isSaved={selectedBook ? savedBookIds.includes(selectedBook.id) : false}
       />
     </>
@@ -113,14 +127,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingVertical: 16,
+    paddingTop: 16, // Adjusted padding
+    paddingBottom: 16,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
   },
-  contentContainer: {
-    paddingBottom: 32,
+  tabsContainer: {
+    width: '100%',
   },
   emptyContainer: {
     paddingVertical: 64,
@@ -132,33 +147,30 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  emptySubText: {
-    color: '#6b7280',
-    fontSize: 14,
-  },
   bookGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: cardGap,
     marginTop: 16,
+    paddingBottom: 32,
   },
   bookCard: {
     width: cardWidth,
     overflow: 'hidden',
-    padding: 0, // Reset card padding to handle it internally
+    padding: 0,
   },
   bookCover: {
     width: '100%',
-    height: 180, // h-48
+    height: 180,
     backgroundColor: '#f3f4f6',
   },
   deleteButton: {
     position: 'absolute',
     top: 8,
     right: 8,
-    height: 32, // h-8
-    width: 32, // w-8
-    borderRadius: 16, // rounded-full
+    height: 32,
+    width: 32,
+    borderRadius: 16,
   },
   bookInfo: {
     padding: 12,
@@ -167,7 +179,7 @@ const styles = StyleSheet.create({
   bookTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    minHeight: 34, // for 2 lines
+    minHeight: 34,
   },
   bookAuthor: {
     fontSize: 12,
