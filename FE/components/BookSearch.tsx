@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   StyleSheet,
@@ -8,21 +7,43 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { Feather, AntDesign } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Book } from '../types';
 import { BookDetailModal } from "./BookDetailModal";
+import { searchBooks } from "../api/googleBooks"; // API 함수 임포트
+import { useBooks } from "../contexts/BookContext"; // useBooks 훅 임포트
+import { Button } from "./ui/Button";
 
-interface BookSearchProps {
-  onAddToLibrary: (book: Book) => void;
-  savedBooks: number[];
-}
-
-export function BookSearch({ onAddToLibrary, savedBooks }: BookSearchProps) {
+export function BookSearch() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Book[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
   const insets = useSafeAreaInsets();
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+
+  // useBooks 훅으로 컨텍스트 값 가져오기
+  const { addToLibrary, savedBookIds } = useBooks();
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      const books = await searchBooks(searchQuery);
+      setSearchResults(books || []);
+    } catch (e) {
+      setError("검색 중 오류가 발생했습니다.");
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleBookPress = (book: Book) => {
     setSelectedBook(book);
@@ -32,115 +53,67 @@ export function BookSearch({ onAddToLibrary, savedBooks }: BookSearchProps) {
     setSelectedBook(null);
   };
 
-  // Data from the original file
-  const bestsellerBooks: Book[] = [
-    {
-      id: 7,
-      title: "트렌드 코리아 2025",
-      author: "김난도",
-      cover: "https://images.unsplash.com/photo-1553729459-efe14ef6055d?w=400&h=600&fit=crop",
-      rating: 4.5,
-      category: "경제/경영",
-      description: "2025년 대한민국의 트렌드를 분석한 필독서"
-    },
-    {
-      id: 8,
-      title: "퓨처 셀프",
-      author: "벤저민 하디",
-      cover: "https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=400&h=600&fit=crop",
-      rating: 4.7,
-      category: "자기계발",
-      description: "미래의 나를 설계하는 실천적 방법론"
-    },
-    {
-      id: 9,
-      title: "불편한 편의점",
-      author: "김호연",
-      cover: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&h=600&fit=crop",
-      rating: 4.8,
-      category: "소설",
-      description: "따뜻한 위로를 전하는 감동 소설"
-    },
-  ];
-
-  const filteredBooks = searchQuery
-    ? bestsellerBooks.filter(
-        (book) =>
-          book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          book.author.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : bestsellerBooks;
-
   return (
     <>
       <ScrollView style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.searchBarContainer}>
           <View style={styles.searchInputWrapper}>
-            <Feather name="search" size={16} color="#6b7280" style={styles.searchIcon} />
             <TextInput
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholder="책 제목이나 저자를 검색하세요"
+              placeholder="책 제목, 저자 등으로 검색하세요" // 플레이스홀더 변경
               placeholderTextColor="#6b7280"
               style={styles.searchInput}
+              onSubmitEditing={handleSearch} // 엔터키로 검색
             />
+            <Button onPress={handleSearch} size="icon" style={styles.searchButton}>
+              <Feather name="search" size={16} color="white" />
+            </Button>
           </View>
         </View>
 
         <View style={styles.contentContainer}>
-          <View style={styles.sectionHeader}>
-            <Feather name="trending-up" size={20} color="#16a34a" />
-            <Text style={styles.sectionTitle}>베스트셀러</Text>
-          </View>
+          {isLoading ? (
+            <ActivityIndicator size="large" color="#16a34a" style={{ marginTop: 20 }} />
+          ) : error ? (
+            <View style={styles.noResults}>
+              <Text style={styles.noResultsText}>{error}</Text>
+            </View>
+          ) : searchResults.length > 0 ? (
+            <View style={styles.bookList}>
+              {searchResults.map((book) => {
+                const isSaved = savedBookIds.includes(book.id);
+                // API 응답에 맞춰 이미지 경로 수정
+                const coverImage = book.volumeInfo.imageLinks?.thumbnail || 'https://via.placeholder.com/80x112.png?text=No+Image';
 
-          <View style={styles.bookList}>
-            {filteredBooks.map((book, index) => {
-              const isSaved = savedBooks.includes(book.id);
-              return (
-                <TouchableOpacity key={book.id} onPress={() => handleBookPress(book)}>
-                  <View style={styles.card}>
-                    <View style={styles.bookContent}>
-                      <View style={styles.coverWrapper}>
-                        <Image source={{ uri: book.cover }} style={styles.coverImage} />
-                        <View style={styles.rankBadge}>
-                          <Text style={styles.rankText}>{index + 1}</Text>
-                        </View>
-                      </View>
-                      
-                      <View style={styles.bookInfo}>
-                        <View style={styles.bookHeader}>
-                          <View style={styles.bookTitleWrapper}>
-                            <Text style={styles.bookTitle} numberOfLines={1}>{book.title}</Text>
-                            <Text style={styles.bookAuthor} numberOfLines={1}>{book.author}</Text>
+                return (
+                  <TouchableOpacity key={book.id} onPress={() => handleBookPress(book)}>
+                    <View style={styles.card}>
+                      <View style={styles.bookContent}>
+                        <Image source={{ uri: coverImage }} style={styles.coverImage} />
+                        <View style={styles.bookInfo}>
+                          <View style={styles.bookHeader}>
+                            <View style={styles.bookTitleWrapper}>
+                              <Text style={styles.bookTitle} numberOfLines={2}>{book.volumeInfo.title}</Text>
+                              <Text style={styles.bookAuthor} numberOfLines={1}>{book.volumeInfo.authors?.join(', ')}</Text>
+                            </View>
+                            <TouchableOpacity onPress={() => addToLibrary(book)} style={styles.heartButton}>
+                              <AntDesign name="heart" size={16} color={isSaved ? '#ef4444' : '#6b7280'} />
+                            </TouchableOpacity>
                           </View>
-                          <TouchableOpacity onPress={() => onAddToLibrary(book)} style={styles.heartButton}>
-                            <AntDesign name="heart" size={16} color={isSaved ? '#ef4444' : '#6b7280'} />
-                          </TouchableOpacity>
-                        </View>
-                        
-                        <View style={styles.categoryBadge}>
-                          <Text style={styles.categoryText}>{book.category}</Text>
-                        </View>
-                        
-                        <Text style={styles.description} numberOfLines={2}>
-                          {book.description}
-                        </Text>
-                        
-                        <View style={styles.ratingContainer}>
-                          <AntDesign name="star" size={12} color="#facc15" />
-                          <Text style={styles.ratingText}>{book.rating}</Text>
+                          <Text style={styles.description} numberOfLines={2}>
+                            {book.volumeInfo.description}
+                          </Text>
                         </View>
                       </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          {filteredBooks.length === 0 && (
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : (
             <View style={styles.noResults}>
-              <Text style={styles.noResultsText}>검색 결과가 없습니다</Text>
+              <Text style={styles.noResultsText}>검색 결과가 여기에 표시됩니다.</Text>
             </View>
           )}
         </View>
@@ -149,13 +122,12 @@ export function BookSearch({ onAddToLibrary, savedBooks }: BookSearchProps) {
         visible={!!selectedBook}
         book={selectedBook}
         onClose={handleCloseModal}
-        onAddToLibrary={onAddToLibrary}
-        isSaved={selectedBook ? savedBooks.includes(selectedBook.id) : false}
+        onAddToLibrary={addToLibrary} // 컨텍스트의 addToLibrary 함수 전달
+        isSaved={selectedBook ? savedBookIds.includes(selectedBook.id) : false}
       />
     </>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -169,39 +141,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   searchInputWrapper: {
-    position: 'relative',
-    justifyContent: 'center',
-  },
-  searchIcon: {
-    position: 'absolute',
-    left: 12,
-    zIndex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   searchInput: {
+    flex: 1,
     height: 40,
     backgroundColor: '#f9fafb',
     borderRadius: 8,
-    paddingLeft: 40,
-    paddingRight: 16,
+    paddingHorizontal: 16,
     fontSize: 16,
     color: '#111827',
+  },
+  searchButton: {
+    height: 40,
+    width: 40,
   },
   contentContainer: {
     padding: 16,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginLeft: 8,
-    color: '#111827',
-  },
   bookList: {
-    // Simulates space-y-3
+    gap: 12,
   },
   card: {
     backgroundColor: '#ffffff',
@@ -209,46 +170,25 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    marginBottom: 12, // for space-y-3
   },
   bookContent: {
     flexDirection: 'row',
     gap: 16,
   },
-  coverWrapper: {
-    position: 'relative',
-  },
   coverImage: {
     width: 80,
     height: 112,
     borderRadius: 8,
-  },
-  rankBadge: {
-    position: 'absolute',
-    top: -8,
-    left: -8,
-    height: 24,
-    width: 24,
-    borderRadius: 12,
     backgroundColor: '#f3f4f6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  rankText: {
-    fontWeight: 'bold',
-    fontSize: 12,
-    color: '#111827',
   },
   bookInfo: {
     flex: 1,
+    gap: 8,
   },
   bookHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
   },
   bookTitleWrapper: {
     flex: 1,
@@ -258,7 +198,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#111827',
-    marginBottom: 4,
   },
   bookAuthor: {
     fontSize: 14,
@@ -267,32 +206,9 @@ const styles = StyleSheet.create({
   heartButton: {
     padding: 4,
   },
-  categoryBadge: {
-    backgroundColor: '#f3f4f6',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginBottom: 8,
-  },
-  categoryText: {
-    fontSize: 10,
-    fontWeight: '500',
-    color: '#374151',
-  },
   description: {
     fontSize: 14,
     color: '#6b7280',
-    marginBottom: 8,
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  ratingText: {
-    fontSize: 14,
-    color: '#111827',
   },
   noResults: {
     paddingVertical: 48,

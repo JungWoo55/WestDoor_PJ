@@ -55,17 +55,19 @@ export function BookDetailModal({ book, visible, onClose, onAddToLibrary, isSave
 
           {/* --- Fixed Header --- */}
           <View style={styles.fixedHeader}>
-            <Image source={{ uri: book.cover }} style={styles.coverImage} />
+            <Image source={{ uri: book.volumeInfo.imageLinks?.thumbnail || 'https://via.placeholder.com/110x160.png?text=No+Image' }} style={styles.coverImage} />
             <View style={styles.headerInfo}>
-              <Text style={styles.title} numberOfLines={2}>{book.title}</Text>
-              <Text style={styles.author}>{book.author}</Text>
-              <Text style={styles.publisher}>{book.publisher || '출판사 정보 없음'}</Text>
+              <Text style={styles.title} numberOfLines={3}>{book.volumeInfo.title}</Text>
+              <Text style={styles.author}>{book.volumeInfo.authors?.join(', ')}</Text>
+              <Text style={styles.publisher}>{book.volumeInfo.publisher || '출판사 정보 없음'}</Text>
               <View style={styles.metaRow}>
-                <Badge variant="secondary">{book.category}</Badge>
-                <View style={styles.ratingContainer}>
-                  <AntDesign name="star" size={16} color="#facc15" />
-                  <Text style={styles.ratingText}>{book.rating}</Text>
-                </View>
+                {book.volumeInfo.categories?.[0] && <Badge variant="secondary">{book.volumeInfo.categories[0]}</Badge>}
+                {book.volumeInfo.averageRating && (
+                  <View style={styles.ratingContainer}>
+                    <AntDesign name="star" size={16} color="#facc15" />
+                    <Text style={styles.ratingText}>{book.volumeInfo.averageRating}</Text>
+                  </View>
+                )}
               </View>
             </View>
           </View>
@@ -74,24 +76,18 @@ export function BookDetailModal({ book, visible, onClose, onAddToLibrary, isSave
           <Tabs defaultValue="intro" style={styles.tabsContainer}>
             <TabsList>
               <TabsTrigger value="intro">책소개</TabsTrigger>
-              <TabsTrigger value="author">저자소개</TabsTrigger>
               <TabsTrigger value="details">상세정보</TabsTrigger>
             </TabsList>
             <ScrollView style={styles.tabContentScrollView}>
               <TabsContent value="intro">
                 <Text style={styles.description}>
-                  {book.description || "이 책에 대한 설명이 아직 없습니다."}
-                </Text>
-              </TabsContent>
-              <TabsContent value="author">
-                <Text style={styles.description}>
-                  {book.authorInfo || "저자 정보가 아직 없습니다."}
+                  {book.volumeInfo.description || "이 책에 대한 설명이 아직 없습니다."}
                 </Text>
               </TabsContent>
               <TabsContent value="details">
-                <DetailRow label="출판사" value={book.publisher} />
-                <DetailRow label="출간일" value={book.publicationDate} />
-                <DetailRow label="페이지" value={book.pages ? `${book.pages}쪽` : '-'} />
+                <DetailRow label="출판사" value={book.volumeInfo.publisher} />
+                <DetailRow label="출간일" value={book.volumeInfo.publishedDate} />
+                <DetailRow label="페이지" value={book.volumeInfo.pageCount ? `${book.volumeInfo.pageCount}쪽` : '-'} />
               </TabsContent>
             </ScrollView>
           </Tabs>
