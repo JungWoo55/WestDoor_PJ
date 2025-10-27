@@ -9,6 +9,7 @@ const app = setupExpress();
 const port = process.env.PORT;
 
 setupSwagger(app);
+app.use("/api", router);
 setupCommonError(app);
 app.use(router);
 app.listen(port, () => {
