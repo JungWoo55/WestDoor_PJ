@@ -1,6 +1,8 @@
 ## Get started
 ### 도커 실행
 cd infra
+// docker volume ls 
+// docker volume rm [볼륨_이름]
 docker-compose up -d
 
 ### 백엔드 환경 설정
@@ -26,6 +28,9 @@ cd FE
 expo-env.d.ts 파일 만들기
 npm install
 npm install axios
+
+.env 파일 만들기
+EXPO_PUBLIC_BOOKS_API_KEY=API 키
 
 ### 프론트 실행
 npm start
