@@ -1,6 +1,8 @@
 ## Get started
 ### 도커 실행
 cd infra
+// docker volume ls 
+// docker volume rm [볼륨_이름]
 docker-compose up -d
 
 ### 백엔드 환경 설정
