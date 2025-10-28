@@ -77,7 +77,6 @@ export const responseFromProfile = (data) => {
   return {
     id: data.id,
     name: data.name,
-    name: data.payload.name,
     nickname: data.nickname,
   };
 };
