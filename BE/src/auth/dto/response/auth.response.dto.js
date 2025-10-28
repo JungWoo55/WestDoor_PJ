@@ -27,6 +27,7 @@ export const responseFromLogin = (data) => {
     user: {
       id: data.payload.id,
       email: data.payload.email,
+      name: data.payload.name,
       nickname: data.payload.nickname,
       isCompleted: data.payload.isCompleted,
     },
@@ -47,6 +48,7 @@ export const responseFromRefresh = (data) => {
     user: {
       id: data.newPayload.id,
       email: data.newPayload.email,
+      name: data.newpayload.name,
       nickname: data.newPayload.nickname,
       isCompleted: data.newPayload.isCompleted,
     },
@@ -74,7 +76,8 @@ export const responseFromLogout = (data) => {
 export const responseFromProfile = (data) => {
   return {
     id: data.id,
-    email: data.email,
+    name: data.name,
+    name: data.payload.name,
     nickname: data.nickname,
   };
 };

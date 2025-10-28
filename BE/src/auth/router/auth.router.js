@@ -20,6 +20,7 @@ router.post("/refresh", handleRefresh);
 router.post(
   "/profile",
   authenticateAccessToken,
+  upload.single(),
   handleProfile,
 );
 export default router;

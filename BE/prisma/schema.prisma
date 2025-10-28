@@ -22,11 +22,22 @@ model User {
   createdAt               DateTime                  @default(now()) @map("created_at")
   updatedAt               DateTime?                 @updatedAt @map("updated_at")
   isCompleted             Boolean                   @default(false) @map("is_completed")
-
+  refreshToken         RefreshToken[]
+  
   surveys   Survey[]
   libraries Library[]
 
-  @@map("유저")
+  @@map("user")
+}
+
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  token     String    @db.Text
+  userId    Int       @map("user_id")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_token")
 }
 
 model Book{
@@ -46,7 +57,7 @@ model Book{
   libraries       Library[]
   // categoryEntries Category[]
 
-  @@map("책")
+  @@map("book")
 }
 
 model Survey {
@@ -60,7 +71,7 @@ model Survey {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   //@@id([id, userId])
-  @@map("설문")
+  @@map("survey")
 }
 
 model Library{
@@ -75,7 +86,7 @@ model Library{
   book Book @relation(fields: [isbn], references: [isbn], onDelete: Cascade)
 
   //@@id([id, userId, isbn])
-  @@map("서재")
+  @@map("library")
 }
 
 // model Author {
@@ -87,7 +98,7 @@ model Library{
 //  book Book @relation(fields: [isbn], references: [isbn], onDelete: Cascade)
 
 //  @@id([id, isbn])
-//  @@map("저자")
+//  @@map("author")
 // }
 
 // model Category{
@@ -99,5 +110,5 @@ model Library{
 //  book Book @relation(fields: [isbn], references: [isbn], onDelete: Cascade)
 
 //  @@id([id, isbn])
-//  @@map("카테고리")
+//  @@map("category")
 //}

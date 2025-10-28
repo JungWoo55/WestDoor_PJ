@@ -343,7 +343,7 @@ export const handleLogin = async (req, res, next) => {
     );
   }
   const user = await login(bodyToLogin(req.body));
-  // 🍪 토큰을 쿠키로 저장
+  console.log("user: ", user)
   setTokenCookies(res, user.accessToken, user.refreshToken);
   res.status(StatusCodes.OK).success(user.user);
 };
@@ -372,7 +372,6 @@ export const handleRefresh = async (req, res, next) => {
                 id: {type:"number", example: 1},
                 email: {type:"string", example: "example@example.com"},
                 nickname: {type:"string", example: "길동이"},
-                profileImage: {type:"string", example: "profile.jpg"},
                 isCompleted: {type:"boolean", example: true},
               }}
             }
@@ -487,6 +486,11 @@ export const handleLogout = async (req, res, next) => {
   // #endregion
   console.log("로그아웃이 요청되었습니다!");
   console.log("cookies:", req.cookies);
+  const token = req.cookies?.refreshToken;
+  if (!token){
+    console.log("token:", token);
+    return res.status(204).send();
+  }
   // 리프레시 토큰을 DB로부터 제거
   await logout(bodyToLogout(req.cookies));
   // 🍪 토큰을 쿠키 저장소에서 제거

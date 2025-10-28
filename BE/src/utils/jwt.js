@@ -16,7 +16,7 @@ export const generateAccessToken = (payload) => {
   return jwt.sign(payload, process.env.JWT_ACCESS_SECRET, {
     expiresIn: expirations.access,
   });
-}; 
+};
 /**
  * **[JWT]**
  * **\<🪛 Utils\>**

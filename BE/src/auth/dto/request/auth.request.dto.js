@@ -59,11 +59,11 @@ export const bodyToLogout = (cookies) => {
  * '프로필 설정'기능의 요청 값을 서비스 레이어로 옮기기 위한 DTO
  * @param {Object} body
  * @param {Object} payload
- * @param {Object} file
  * @returns {Object}
  */
-export const bodyToProfile = (body, payload, file) => {
+export const bodyToProfile = (body, payload) => {
   return {
+    name: body.name,
     nickname: body.nickname,
     payload: payload,
   };
