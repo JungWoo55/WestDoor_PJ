@@ -12,7 +12,7 @@ BE/.env
 
 /BE/src/generated/prisma
 /BE/prisma/migrations
-
+/BE/prisma/migrations/*
 # Expo
 FE/.expo/
 FE/dist/
