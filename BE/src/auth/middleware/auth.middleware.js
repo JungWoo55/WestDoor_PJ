@@ -13,6 +13,7 @@ import { detectDuplicateLogin } from "../service/auth.service.js";
 export const authenticateAccessToken = async (req, res, next) => {
   // 쿠키로 부터 액세스 토큰만 추출
   const { accessToken, refreshToken } = req.cookies;
+  
   // 엑세스 토큰, 리프레시 토큰이 모두 존재하지 않는 경우 비로그인 상태로 간주하고 에러 throw
   if (!accessToken && !refreshToken)
     return next(new LoginRequiredError("로그인이 필요합니다."));
