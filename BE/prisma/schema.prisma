@@ -54,7 +54,7 @@ model Book{
 
   // Relations
   // authors         Author[]
-  libraries       Library[]
+  // libraries       Library[]
   // categoryEntries Category[]
 
   @@map("book")
@@ -80,10 +80,11 @@ model Library{
   isbn    String
   isRead  Boolean? @map("is_read")
   isRecom Boolean? @map("is_recom")
+  created_at DateTime? @default(now()) @map("created_at")
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  book Book @relation(fields: [isbn], references: [isbn], onDelete: Cascade)
+  // book Book @relation(fields: [isbn], references: [isbn], onDelete: Cascade)
 
   //@@id([id, userId, isbn])
   @@map("library")
