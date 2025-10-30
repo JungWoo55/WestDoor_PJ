@@ -35,13 +35,14 @@ export const handleSignUp = async (req, res, next) => {
     #swagger.summary = '회원가입'
     #swagger.description = '사용자 회원가입을 처리합니다.'
     #swagger.tags = ['Auth']
-    #swagger.requestBody = {
-      required : true,
-      content:{
-        "application/json":{
-          schema:{
-            type:"object",
-            properties:{
+    #swagger.parameters = [{
+      "in" : "body",
+      "name" : "body",
+      "description": "회원가입 정보",  
+      "required" : true,
+      "schema":{
+          "type":"object",
+          properties:{
               name: {
                 type:"string",
                 example:"홍길동"
@@ -56,15 +57,11 @@ export const handleSignUp = async (req, res, next) => {
                 format:"password",
                 example:"password123!"
               }
-            }
           }
         }
-      }
-    }
+      }]
     #swagger.responses[201] = {
       description: '회원가입 성공',
-      content:{
-        "application/json":{
           schema:{
             type:"object",
             properties:{
@@ -94,16 +91,14 @@ export const handleSignUp = async (req, res, next) => {
                     example:"example@example.com"
                   },
                 }
-              }
-            }
+           
           }
         }
       }
     }
     #swagger.responses[400] = {
       description: "회원가입 실패 (올바르지 않은 입력 값)",
-      content:{
-        "application/json":{
+    
           examples:{
             InvalidName :{
                 summary:"올바르지 않은 이름 형식",
@@ -153,14 +148,12 @@ export const handleSignUp = async (req, res, next) => {
                 data:null
               }
             }
-          }
-        }
+       
       }
     }
     #swagger.responses[409] = {
       description: "회원가입 실패 (이미 존재하는 이메일)",
-      content:{
-        "application/json":{
+      
           schema:{
             type:"object",
             properties:{
@@ -175,8 +168,7 @@ export const handleSignUp = async (req, res, next) => {
               },
               data:{type:"object", nullable:true, example:null}
             }
-          }
-        }
+        
       }
     }
   */
@@ -403,6 +395,7 @@ export const handleRefresh = async (req, res, next) => {
               data: {type: "object", properties:{
                 id: {type:"number", example: 1},
                 email: {type:"string", example: "example@example.com"},
+                name: {type:"string", example:"홍길동"},
                 nickname: {type:"string", example: "길동이"},
                 isCompleted: {type:"boolean", example: true},
               }}

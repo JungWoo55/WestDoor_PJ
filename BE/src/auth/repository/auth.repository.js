@@ -18,6 +18,7 @@ export const createAccount = async (data) => {
   if (isExistEmail) return -1;
   const user = await prisma.user.create({
     data: {
+      name: data.name,
       email: data.email,
       password: await bcrypt.hash(data.password, 10),
     },
@@ -60,6 +61,7 @@ export const findAccount = async (data) => {
       nickname: true,
       email: true,
       id: true,
+      name:true,
       password: true,
       isCompleted: true,
     },
@@ -161,6 +163,7 @@ export const updateRefreshToken = async (oldToken, newToken) => {
 export const findAccountById = async (id) => {
   const user = await prisma.user.findUnique({
     select: {
+      name: true,
       nickname: true,
       email: true,
       id: true,

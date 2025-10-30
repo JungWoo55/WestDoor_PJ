@@ -67,6 +67,7 @@ export const login = async (body) => {
   const payload = {
     id: user.id,
     email: user.email,
+    name: user.name,
     nickname: user.nickname,
     isCompleted: user.isCompleted,
   };
@@ -117,6 +118,7 @@ export const refresh = async (cookies) => {
   const newPayload = {
     id: user.id,
     email: user.email,
+    name: user.name,
     nickname: user.nickname,
     isCompleted: user.isCompleted,
   };
