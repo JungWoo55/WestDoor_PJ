@@ -49,7 +49,7 @@ export const responseFromRefresh = (data) => {
     user: {
       id: data.newPayload.id,
       email: data.newPayload.email,
-      name: data.newpayload.name,
+      name: data.newPayload.name,
       nickname: data.newPayload.nickname,
       isCompleted: data.newPayload.isCompleted,
     },
