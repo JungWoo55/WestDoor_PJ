@@ -31,7 +31,6 @@ const regex = {
  */
 export const handleSignUp = async (req, res, next) => {
   /*
-  // #region 📚 Swagger: 회원가입
     #swagger.summary = '회원가입'
     #swagger.description = '사용자 회원가입을 처리합니다.'
     #swagger.tags = ['Auth']
@@ -42,10 +41,6 @@ export const handleSignUp = async (req, res, next) => {
           schema:{
             type:"object",
             properties:{
-              name: {
-                type:"string",
-                example:"홍길동"
-              },
               email:{
                 type:"string",
                 format:"email",
@@ -84,10 +79,6 @@ export const handleSignUp = async (req, res, next) => {
                     type:"number",
                     example:1
                   },
-                  name:{
-                    type:"string",
-                    example:"홍길동"
-                  },
                   email:{
                     type:"string",
                     format:"email",
@@ -105,22 +96,6 @@ export const handleSignUp = async (req, res, next) => {
       content:{
         "application/json":{
           examples:{
-            InvalidName :{
-                summary:"올바르지 않은 이름 형식",
-                value:{
-                  resultType: "FAIL",
-                  error:{
-                    errorCode:"I001",
-                    reason: "이름 형식이 올바르지 않습니다.",
-                    data:{
-                      name: "",
-                      email: "example@example.com",
-                      password: "password"
-                    }
-                  },
-                  data:null
-                }
-              },
             InvalidEmail :{
               summary:"올바르지 않은 이메일 형식",
               value:{
@@ -129,7 +104,6 @@ export const handleSignUp = async (req, res, next) => {
                   errorCode:"I001",
                   reason: "이메일 형식이 올바르지 않습니다.",
                   data:{
-                    name: "홍길동",
                     email: "exampleexample.com",
                     password: "password"
                   }
@@ -145,7 +119,6 @@ export const handleSignUp = async (req, res, next) => {
                   errorCode:"I001",
                   reason: "비밀번호 형식이 올바르지 않습니다.",
                   data:{
-                    name: "홍길동",
                     email: "example@example.com",
                     password: "password"
                   }
@@ -170,7 +143,7 @@ export const handleSignUp = async (req, res, next) => {
                 properties:{
                   errorCode:{type:"string", example:"U001"},
                   reason:{type:"string", example:"이미 존재하는 이메일 입니다."},
-                  data:{type:"object", example:{name: "홍길동", email:"example@example.com", password:"password"}}
+                  data:{type:"object", example:{email:"example@example.com", password:"password"}}
                 }
               },
               data:{type:"object", nullable:true, example:null}
@@ -180,13 +153,8 @@ export const handleSignUp = async (req, res, next) => {
       }
     }
   */
-  // #endregion
   console.log("회원가입이 요청되었습니다!");
   console.log("body:", req.body);
-  // ✅ 유효성 검사 (이름)
-  if (!req.body.name) {
-    throw new InvalidInputValueError("이름 형식이 올바르지 않습니다.", req.body);
-  }
   // ✅ 유효성 검사 (이메일)
   if (!req.body.email || !regex.email.test(req.body.email)) {
     throw new InvalidInputValueError(

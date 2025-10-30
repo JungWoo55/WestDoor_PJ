@@ -8,7 +8,6 @@
  */
 export const responseFromSignUp = (data) => {
   return {
-    name: data.body.name,
     userId: data.userId,
     email: data.body.email,
   };
