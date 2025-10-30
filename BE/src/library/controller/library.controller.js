@@ -15,7 +15,9 @@ import { addBookToUserLibrary, getLibraryList, removeBookFromUserLibrary  } from
  */
 
 export const handleAddBook = async (req, res, next) => {
-    /* #swagger.tags = ['Library']
+    /* 
+       // #region 📚 Swagger: 도서 추가/수정
+       #swagger.tags = ['Library']
        #swagger.summary = '도서 추가/수정'
        #swagger.description = '내 서재에 도서를 추가하거나, 이미 존재하는 도서라면 읽음/추천 플래그를 업데이트합니다.'
        #swagger.requestBody = {
@@ -138,7 +140,9 @@ export const handleAddBook = async (req, res, next) => {
  * 3. 조회된 서재 항목들을 LibraryListResponseDto로 변환하여 응답
  */
 export const handleGetMyLibrary = async (req, res, next) => {
-    /* #swagger.tags = ['Library']
+    /* 
+       // #region 📚 Swagger: 내 서재 목록 조회
+       #swagger.tags = ['Library']
        #swagger.summary = '내 서재 목록 조회'
        #swagger.description = '내 서재에서 읽은 책 또는 추천 책 목록을 조회합니다.'
        #swagger.parameters = [{
@@ -146,11 +150,9 @@ export const handleGetMyLibrary = async (req, res, next) => {
          "name": "page",
          "description": "조회할 목록 유형을 지정합니다.",
          "required": true,
-         "schema": {
-           "type": "string",
-           "enum": ["isRead", "isRecom"],
-           
-         }
+         "type": "string",
+        "enum": ["isRead", "isRecom"],
+        
        }]
     #swagger.responses[200] = {
         description: '내 서재 목록이 성공적으로 조회되었습니다.',
@@ -263,7 +265,9 @@ export const handleGetMyLibrary = async (req, res, next) => {
  * 4. 결과를 RemoveBookResponseDto로 변환하여 응답
  */
 export const handleRemoveBook = async (req, res, next) => {
-    /* #swagger.tags = ['Library']
+    /* 
+       // #region 📚 Swagger: 서재 도서 삭제/수정
+       #swagger.tags = ['Library']
        #swagger.summary = '서재 도서 삭제/수정'
        #swagger.description = '서재에서 도서를 삭제하거나, 읽음/추천 플래그를 수정합니다.'
        #swagger.parameters = [{

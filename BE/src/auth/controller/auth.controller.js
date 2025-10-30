@@ -31,6 +31,7 @@ const regex = {
  */
 export const handleSignUp = async (req, res, next) => {
   /*
+  // #region 📚 Swagger: 회원가입
     #swagger.summary = '회원가입'
     #swagger.description = '사용자 회원가입을 처리합니다.'
     #swagger.tags = ['Auth']
@@ -179,6 +180,7 @@ export const handleSignUp = async (req, res, next) => {
       }
     }
   */
+  // #endregion
   console.log("회원가입이 요청되었습니다!");
   console.log("body:", req.body);
   // ✅ 유효성 검사 (이름)
