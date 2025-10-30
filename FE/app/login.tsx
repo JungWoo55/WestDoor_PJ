@@ -5,7 +5,7 @@ import { useRouter, Link } from 'expo-router';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Feather } from '@expo/vector-icons';
-import {apiClient} from "@/api/client";
+import api from '@/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
@@ -17,46 +17,26 @@ export default function LoginScreen() {
 
 
   const handleLogin = () => {
-    // TODO: Implement actual login logic
-    // On success, navigate to the main app and replace the history stack
     setError(null)
     startTransition(async () => {
-      const res = await apiClient.login(email, password)
-      if (!res.success) {
-        setError(res.error || "로그인에 실패했어요. 다시 시도해주세요.")
-        return
-      }
-      if (!res.success) {
-        // res.error는 백엔드가 보낸 에러 메시지일 것입니다.
-        setError(res.error || "이메일 또는 비밀번호가 일치하지 않습니다.");
-        return; // 👈 함수를 중단합니다.
-      }
-      
-      // 💡 2. (선택적) data가 null인지 한 번 더 확인합니다.
-      const data = (res as any).success;
-      if (!data) {
-        setError("사용자 정보를 불러오지 못했습니다.");
-        return;
-      }
-      // const data = (res as any).data;
-      const user = data.user;
-      const tokens = data.tokens;
-      if (user?.id) {
-        await AsyncStorage.setItem("userid", String(user.id))
-      }
-      if (tokens?.access) {
-        await AsyncStorage.setItem("accessToken", tokens.access)
-      }
-      if (tokens?.refresh) {
-        await AsyncStorage.setItem("refreshToken", tokens.refresh)
-      }
-      // if (user?.is_completed === false) {
-      //   router.replace("/forms");
-      // } else{
-      router.replace("/(tabs)");
-      // }
-    })
-  };
+      try {
+        const response = await api.post('/auth/login', { email, password });
+        const user = response.data.success; // 백엔드 응답 구조에 따라 조정
+        if (user?.id) {
+          await AsyncStorage.setItem("userid", String(user.id));
+        }
+        
+        if (user?.isCompleted === false) {
+            router.replace("/signup"); //설문 창으로 라우터 변경해야함
+        } else{
+          router.replace("/(tabs)");
+        }
+      } catch (e: any) {
+        console.log('Login Error:', JSON.stringify(e, null, 2));
+        setError(e.response?.data?.error?.reason || "로그인에 실패했어요. 다시 시도해주세요.");
+        }
+      })
+    };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -88,9 +68,6 @@ export default function LoginScreen() {
             onChangeText={setPassword}
           />
         </View>
-        {/* 👇 🌟🌟🌟 이 블록을 추가하세요 🌟🌟🌟
-          error state에 값이 있으면(null이 아니면) 에러 메시지를 렌더링합니다.
-        */}
         {error && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
@@ -111,16 +88,15 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  // 👇 에러 메시지를 위한 스타일 추가
   errorContainer: {
     padding: 10,
-    backgroundColor: '#FFEBEE', // 붉은 배경
+    backgroundColor: '#FFEBEE', 
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 10, // 버튼과의 간격
+    marginBottom: 10, 
   },
   errorText: {
-    color: '#D32F2F', // 붉은 텍스트
+    color: '#D32F2F', 
     fontSize: 14,
     fontWeight: '500',
   },

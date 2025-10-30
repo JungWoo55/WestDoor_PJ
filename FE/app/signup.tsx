@@ -5,7 +5,7 @@ import { useRouter, Link } from 'expo-router';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Feather } from '@expo/vector-icons';
-import {apiClient} from "@/api/client";
+import api from '@/api';
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -34,15 +34,14 @@ export default function SignUpScreen() {
       return
     }
     startTransition(async () => {
-      const res = await apiClient.signup(formData.email, formData.password)
-      if (!res.success) {
-        setError(res.error || "회원가입에 실패했어요.")
-        return
+      try {
+        const { name, email, password } = formData;
+        await api.post('/auth/signup', { name, email, password });
+        router.replace('/login');
+      } catch (e: any) {
+        setError(e.response?.data?.error?.reason || "회원가입에 실패했어요.");
       }
-      router.replace('/login');
     })
-    // TODO: Implement actual sign-up logic
-    // On success, navigate to the main app and replace the history stack
   };
 
   return (
