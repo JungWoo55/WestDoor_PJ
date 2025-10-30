@@ -1,4 +1,4 @@
-import {findEntryByIsbn, updateEntryFlags, createEntry,deleteEntryById, findEntriesByUserId}  from "../repository/library.repository.js";
+import {findEntryByIsbn, updateEntryFlags, createEntry,deleteEntryById, findEntriesByUserId, updateEntryCount}  from "../repository/library.repository.js";
 
 /**
  * @description 서재에 도서 추가
@@ -74,3 +74,29 @@ export const getLibraryList = async (userId, page) => {
     const entries = await findEntriesByUserId(userId, page);
     return entries;
 };
+
+/**
+ * @description 서쟈애 았는 도서 정독 횟수 증가
+ * 컨트롤러에서 {readBookDto}를 받음
+ * 1. 이미 책이 있는지 확인
+ * 2. 있다면 -> 정독횟수 업데이트 (upsert 로직)
+ * 3. 없다면 -> 404 Error
+ */
+export const readBookToUserLibrary = async (userId, readBookDto) => {
+    const {isbn} = readBookDto;
+
+    // 1. 이미 책이 있는지 확인
+    const existingEntry = await findEntryByIsbn(userId, isbn);
+
+    if (existingEntry) {
+        // 2. 있다면 -> 정독 횟수 증가
+        const updatedEntry = await updateEntryCount(existingEntry.id,existingEntry.isbn);
+        return updatedEntry;
+    } 
+    else{
+        const error = new Error("서재에 해당 도서가 없습니다.");
+        error.statusCode = 404;
+        throw error;
+    }
+};
+

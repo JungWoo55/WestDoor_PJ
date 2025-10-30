@@ -1,8 +1,8 @@
 import { StatusCodes } from "http-status-codes";
 import { InvalidInputValueError } from "../../error.js";
-import {bodyToAddBook, queryToGetLibrary, paramsToBook} from "../dto/request/library.request.dto.js"
+import {bodyToAddBook, queryToGetLibrary, paramsToBook, bodyToReadBook} from "../dto/request/library.request.dto.js"
 import { LibraryEntryResponseDto, LibraryListResponseDto, RemoveBookResponseDto } from "../dto/response/library.response.dto.js";
-import { addBookToUserLibrary, getLibraryList, removeBookFromUserLibrary  } from "../service/library.service.js";
+import { addBookToUserLibrary, getLibraryList, removeBookFromUserLibrary,readBookToUserLibrary  } from "../service/library.service.js";
 
 /**
  * **[Library]**
@@ -413,6 +413,118 @@ export const handleRemoveBook = async (req, res, next) => {
         const result = await removeBookFromUserLibrary(userId, isbn, page);
 
         const responseDto = new RemoveBookResponseDto(result);
+        res.status(StatusCodes.OK).success(responseDto);
+    } catch(error) {
+        next(error);
+    }
+};
+
+/**
+ * ** [Library]**
+ * **\<📚 Controller\>**
+ * ***ReadBook***
+ * 
+ */
+export const handleReadBook = async (req, res, next) => {
+    /* 
+       // #region 📚 Swagger: 도서 완독
+       #swagger.tags = ['Library']
+       #swagger.summary = '도서 완독'
+       #swagger.description = '내 서재에 도서를 완독 횟수를 증가시킵니다.'
+       #swagger.requestBody = {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                isbn: { type: "string", example: "9788966262583" },
+              },
+              required: ["isbn"]
+            }
+          }
+        }
+      }
+      #swagger.responses[201] = {
+        description: '도서의 완독 횟수가 성공적으로 증가되었습니다.',
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                resultType: { type: "string", example: "success" },
+                error: {type: "null", nullable: true, example: null },
+                data: {
+                    type: "object",
+                    properties: {
+                        id: { type: "integer", example: 1 },
+                        isbn: { type: "string", example: "9788966262583" },
+                        count: {type:"integer", example: 1},
+                        createdAt: { type: "string", format: "date-time", example: "2025-10-29T00:00:00Z" }
+                    }
+                }
+              }
+            }
+          }
+        }
+      }
+      #swagger.responses[400] = {
+        description: '잘못된 요청입니다. 요청 데이터가 유효하지 않을 때 발생합니다.',
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                resultType: { type: "string", example: "FAIL" },
+                error: {
+                  type: "object",
+                  properties: {
+                    errorCode: { type: "string", example: "I001" },
+                    reason: { type: "string", example: "잘못된 입력입니다." },
+                    data: { type: "object", nullable: true }
+                  }
+                },
+                data: { type: "null", nullable: true, example: null}
+              }
+            }
+          }
+        }
+      }
+      #swagger.responses[401] = {
+        description: "인증 실패",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                resultType: { type: "string", example: "FAIL" },
+                error: {
+                  type: "object",
+                  properties: {
+                    errorCode: { type: "string", example: "I003" },
+                    reason: { type: "string", example: "유효하지 않은 인증 토큰입니다." },
+                    data: { type: "null" }
+                  }
+                },
+                data: { type: "null", nullable: true, example: null}
+              }
+            }
+          }
+        }
+      }
+    */
+   // #endregion
+    console.log("내 서재 책 완독 요청되었습니다.")
+    console.log("body:", req.body);
+    console.log("user:", req.user);
+    
+    try{
+        const {id: userId} = req.user; // auth 미들웨어에서 주입된 userId
+        if (!req.body.isbn){
+            throw new InvalidInputValueError("ISBN이 누락되었습니다.", req.body);
+        }
+        const newEntry = await readBookToUserLibrary(userId, bodyToReadBook(req.body));
+        const responseDto = new LibraryEntryResponseDto(newEntry);
         res.status(StatusCodes.OK).success(responseDto);
     } catch(error) {
         next(error);

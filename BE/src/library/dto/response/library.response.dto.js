@@ -10,6 +10,7 @@ export class LibraryEntryResponseDto {
   constructor(entry) {
     this.id = entry.id;
     this.isbn = entry.isbn;
+    this.count = entry.count;
     this.isRead = entry.isRead;
     this.isRecom = entry.isRecom;
     this.createdAt = entry.createdAt;
