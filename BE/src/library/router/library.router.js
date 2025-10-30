@@ -3,6 +3,7 @@ import {
     handleAddBook,
     handleGetMyLibrary,
     handleRemoveBook,
+    handleReadBook
 } from "../controller/library.controller.js";
 import {
   authenticateAccessToken,
@@ -19,10 +20,12 @@ router.use(authenticateAccessToken, verifyUserIsActive);
 // 내 서재 목록 조회
 router.get("/", handleGetMyLibrary);
 
-// 즐겨찾기 추가
+// 내 서재 추가
 router.post("/", handleAddBook);
 
-// 즐겨찾기 삭제
+// 내 서재 삭제
 router.delete("/:isbn/:page", handleRemoveBook);
 
+// 내 서재 읽은 책 추가
+router.patch("/", handleReadBook);
 export default router;
