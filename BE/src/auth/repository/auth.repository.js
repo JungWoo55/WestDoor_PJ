@@ -41,7 +41,7 @@ export const updateProfile = async (data) => {
     data: {
       nickname: data.nickname,
       profile: data.profileImageName,
-      isCompleted: true,
+      isCompleted: data.isCompleted,
     },
   });
   return user;
