@@ -17,26 +17,11 @@ export class DuplicateUserEmailError extends Error {
 }
 /**
  * **\<💥 Error\>**
- * ***DuplicateUserPhoneError***
- * 중복된 전화번호가 입력되었을때 발생하는 에러
- */
-export class DuplicateUserPhoneError extends Error {
-  errorCode = "U002";
-  statusCode = 409;
-
-  constructor(reason, data) {
-    super(reason);
-    this.reason = reason;
-    this.data = data;
-  }
-}
-/**
- * **\<💥 Error\>**
  * ***LoginRequiredError***
  * 로그인이 필요한 요청에 로그인하지 않았을때 발생하는 에러
  */
 export class LoginRequiredError extends Error {
-  errorCode = "U003";
+  errorCode = "U002";
   statusCode = 401;
 
   constructor(reason, data) {
