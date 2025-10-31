@@ -300,7 +300,7 @@ export const handleEditSurvey = async (req, res, next) => {
       }
     */
    // #endregion
-    console.log("설문 생성이 요청되었습니다.")
+    console.log("설문 수정이 요청되었습니다.")
     console.log("body:", req.body);
     console.log("user:", req.user);
     
