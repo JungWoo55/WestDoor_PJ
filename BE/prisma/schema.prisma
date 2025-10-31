@@ -63,9 +63,9 @@ model Book{
 
 model Survey {
   id       Int     @id @default(autoincrement())
-  userId   Int     @map("user_id")
+  userId   Int     @unique @map("user_id")
   amount   Int?    @map("amount") 
-  genre    String[] 
+  style String 
   category String[] 
 
   // Relation
