@@ -9,7 +9,7 @@ import { addBookToUserLibrary, getLibraryList, removeBookFromUserLibrary,readBoo
  * **\<📚 Controller\>**
  * ***addBook***
  * 내 서재에 도서를 추가합니다.
- * 1. 요청 바디를 AddBookRequestDto로 변환
+ * 1. 요청 바디를 bodyToAddBook로 변환
  * 2. 서비스의 addBookToLibrary 호출
  * 3. 생성된/업데이트된 서재 항목을 LibraryEntryResponseDto로 변환하여 응답
  */

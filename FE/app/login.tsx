@@ -27,7 +27,7 @@ export default function LoginScreen() {
         }
         
         if (user?.isCompleted === false) {
-            router.replace("/signup"); //설문 창으로 라우터 변경해야함
+            router.replace("/survey"); //설문 창으로 라우터 변경해야함
         } else{
           router.replace("/(tabs)");
         }

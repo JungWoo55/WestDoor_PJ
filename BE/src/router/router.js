@@ -1,6 +1,7 @@
 import express from "express";
 import authRouter from "../auth/router/auth.router.js";
 import libraryRouter from "../library/router/library.router.js";
+import surveyRouter from "../survey/router/survey.router.js";
 
 const router = express.Router({ mergeParams: true });
 router.get("/", (req, res) => {
@@ -16,4 +17,5 @@ router.get("/", (req, res) => {
 });
 router.use("/auth", authRouter);
 router.use("/library", libraryRouter);
+router.use("/survey", surveyRouter);
 export default router;
