@@ -36,7 +36,7 @@ export const createSurvey = async (surveyDto, user_id) => {
     return survey.id;
   } catch(error){
     console.error("Survey 생성 실패: ", error);
-    return null;
+    throw error;
   }  
 };
 

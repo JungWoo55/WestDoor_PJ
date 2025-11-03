@@ -22,8 +22,8 @@ export default function LoginScreen() {
       try {
         const response = await api.post('/auth/login', { email, password });
         const user = response.data.success; // 백엔드 응답 구조에 따라 조정
-        if (user?.id) {
-          await AsyncStorage.setItem("userid", String(user.id));
+        if (user) {
+          await AsyncStorage.setItem("user", JSON.stringify(user));
         }
         
         if (user?.isCompleted === false) {

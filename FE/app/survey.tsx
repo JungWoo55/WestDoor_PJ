@@ -4,6 +4,11 @@ import { View, Text, StyleSheet, SafeAreaView, Alert, TouchableOpacity, ScrollVi
 import { useRouter } from 'expo-router';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { submitSurvey } from '../api/survey';
+
+import { updateNickname } from '../api/auth';
+
+import { useBooks } from '../contexts/BookContext';
 
 const READING_AMOUNTS = ['안읽음', '1~2권', '3권 이상'];
 const CATEGORIES = [
@@ -14,6 +19,7 @@ const CATEGORIES = [
 
 export default function SurveyScreen() {
   const router = useRouter();
+  const { updateUserProfile } = useBooks();
   const [nickname, setNickname] = useState('');
   const [readingAmount, setReadingAmount] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -26,17 +32,27 @@ export default function SurveyScreen() {
   };
 
   const handleSubmit = async () => {
-    // TODO: Implement API call to submit survey data
-    console.log({ nickname, readingAmount, selectedCategories, readingStyle });
-
     if (!nickname || !readingAmount || selectedCategories.length === 0) {
       Alert.alert('입력 필요', '닉네임, 월간 독서량, 선호 카테고리는 필수 항목입니다.');
       return;
     }
 
-    Alert.alert('제출 완료', '설문이 제출되었습니다.', [
-      { text: 'OK', onPress: () => router.replace('/(tabs)') },
-    ]);
+    try {
+      await submitSurvey({
+        nickname,
+        readingAmount,
+        selectedCategories,
+        readingStyle,
+      });
+      await updateNickname(nickname);
+      await updateUserProfile({ nickname, favoriteGenres: selectedCategories });
+      Alert.alert('제출 완료', '설문이 제출되었습니다.', [
+        { text: 'OK', onPress: () => router.replace('/(tabs)') },
+      ]);
+    } catch (error) {
+      console.error('Failed to submit survey:', error);
+      Alert.alert('제출 실패', '설문 제출 중 오류가 발생했습니다. 다시 시도해주세요.');
+    }
   };
 
   return (

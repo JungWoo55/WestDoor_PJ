@@ -1,10 +1,12 @@
 
-import React, { createContext, ReactNode, useContext, useState } from 'react';
+import React, { createContext, ReactNode, useContext, useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { Book } from '../types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // 프로필 정보 타입 정의
 export interface UserProfile {
+  id: number;
   email: string;
   nickname: string;
   bio: string;
@@ -25,19 +27,26 @@ interface BookContextType {
 // 컨텍스트 생성
 const BookContext = createContext<BookContextType | undefined>(undefined);
 
-// 가상의 초기 프로필 정보
-const initialProfile: UserProfile = {
-  email: 'bookworm@example.com',
-  nickname: '독서광',
-  bio: '책 읽는 것을 좋아합니다.',
-  favoriteGenres: ['소설', '자기계발'],
-  readingGoal: 50,
-};
-
 // 프로바이더 컴포넌트 생성
 export const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [savedBooks, setSavedBooks] = useState<Book[]>([]);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(initialProfile);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      const storedUser = await AsyncStorage.getItem('user');
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setUserProfile({
+          bio: '',
+          favoriteGenres: [],
+          readingGoal: 0,
+          ...parsedUser,
+        });
+      }
+    };
+    loadUserProfile();
+  }, []);
 
   const addToLibrary = (book: Book) => {
     setSavedBooks((prev) => {
@@ -58,8 +67,13 @@ export const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setSavedBooks((prev) => prev.filter((book) => book.id !== bookId));
   };
 
-  const updateUserProfile = (profileUpdates: Partial<UserProfile>) => {
-    setUserProfile(prev => prev ? { ...prev, ...profileUpdates } : null);
+  const updateUserProfile = async (profileUpdates: Partial<UserProfile>) => {
+    setUserProfile(prevProfile => {
+      const newUserProfile = { ...(prevProfile || {}), ...profileUpdates } as UserProfile;
+      AsyncStorage.setItem('user', JSON.stringify(newUserProfile))
+        .catch(e => console.error("Failed to save user profile to AsyncStorage", e));
+      return newUserProfile;
+    });
   };
 
   const savedBookIds = savedBooks.map((book) => book.id);
