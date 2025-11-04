@@ -110,7 +110,7 @@ export const handleCreateSurvey = async (req, res, next) => {
     
     try{
         const {id: userId} = req.user; // auth 미들웨어에서 주입된 userId
-        if (!req.body.amount){
+        if (!req.body.amount && req.body.amount != 0){
             throw new InvalidInputValueError("amount가 누락되었습니다.", req.body);
         }
         if (!req.body.category){
