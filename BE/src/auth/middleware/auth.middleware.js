@@ -82,8 +82,8 @@ export const identifyAccessToken = async (req, res, next) => {
  */
 export const verifyUserIsActive = (req, res, next) => {
   // ✅ 유효성 검사 (유저 권한)
-  if (!req.payload.isCompleted) {
-    next(new InvalidTokenError("유효하지 않은 인증 토큰입니다.", req.body));
-  }
+  // if (!req.payload.isCompleted) {
+  //   next(new InvalidTokenError("유효하지 않은 인증 토큰입니다.", req.body));
+  // }
   next();
 };

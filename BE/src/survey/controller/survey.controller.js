@@ -107,7 +107,7 @@ export const handleCreateSurvey = async (req, res, next) => {
     console.log("설문 생성이 요청되었습니다.")
     console.log("body:", req.body);
     console.log("user:", req.user);
-    
+
     try{
         const {id: userId} = req.user; // auth 미들웨어에서 주입된 userId
         if (!req.body.amount && req.body.amount != 0){
@@ -118,6 +118,7 @@ export const handleCreateSurvey = async (req, res, next) => {
         }
         const newSurvey = await createUserSurvey(userId,bodyToSurvey(req.body));
         const responseDto = responseFromSurvey(newSurvey);
+        
         res.status(StatusCodes.CREATED).success(responseDto);
     } catch(error) {
         next(error);
