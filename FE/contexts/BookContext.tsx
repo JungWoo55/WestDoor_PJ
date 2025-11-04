@@ -9,6 +9,7 @@ export interface UserProfile {
   id: number;
   email: string;
   nickname: string;
+  name?: string; // 백엔드에서 제공하는 name 필드 (선택적)
   bio: string;
   favoriteGenres: string[];
   readingGoal: number;
@@ -22,6 +23,8 @@ interface BookContextType {
   removeFromLibrary: (bookId: string) => void;
   userProfile: UserProfile | null;
   updateUserProfile: (profile: Partial<UserProfile>) => void;
+  reloadUserProfile: () => Promise<void>;
+  clearUserProfile: () => void;
 }
 
 // 컨텍스트 생성
@@ -32,19 +35,37 @@ export const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [savedBooks, setSavedBooks] = useState<Book[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  useEffect(() => {
-    const loadUserProfile = async () => {
-      const storedUser = await AsyncStorage.getItem('user');
-      if (storedUser) {
+  const loadUserProfile = async () => {
+    const storedUser = await AsyncStorage.getItem('user');
+    if (storedUser) {
+      try {
         const parsedUser = JSON.parse(storedUser);
+        // 백엔드 응답 구조에 맞게 user 객체에서 데이터 추출 (중첩된 경우 대비)
+        const userData = parsedUser.user || parsedUser;
         setUserProfile({
-          bio: '',
-          favoriteGenres: [],
-          readingGoal: 0,
-          ...parsedUser,
+          id: userData.id || 0,
+          email: userData.email || '',
+          nickname: userData.nickname || userData.name || '',
+          name: userData.name,
+          bio: userData.bio || '',
+          favoriteGenres: userData.favoriteGenres || [],
+          readingGoal: userData.readingGoal || 0,
         });
+      } catch (error) {
+        console.error('Failed to parse user profile:', error);
       }
-    };
+    } else {
+      // 저장된 사용자 정보가 없으면 프로필 초기화
+      setUserProfile(null);
+    }
+  };
+
+  const clearUserProfile = () => {
+    setUserProfile(null);
+    setSavedBooks([]);
+  };
+
+  useEffect(() => {
     loadUserProfile();
   }, []);
 
@@ -79,7 +100,16 @@ export const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const savedBookIds = savedBooks.map((book) => book.id);
 
   return (
-    <BookContext.Provider value={{ savedBooks, savedBookIds, addToLibrary, removeFromLibrary, userProfile, updateUserProfile }}>
+    <BookContext.Provider value={{ 
+      savedBooks, 
+      savedBookIds, 
+      addToLibrary, 
+      removeFromLibrary, 
+      userProfile, 
+      updateUserProfile,
+      reloadUserProfile: loadUserProfile,
+      clearUserProfile,
+    }}>
       {children}
     </BookContext.Provider>
   );

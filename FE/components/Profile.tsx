@@ -1,5 +1,6 @@
 import React from 'react';
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Avatar } from './ui/Avatar';
@@ -7,13 +8,52 @@ import { Badge } from './ui/Badge';
 import { Separator } from './ui/Separator';
 import { Feather, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useBooks } from '../contexts/BookContext'; // 컨텍스트 훅 임포트
+import { useBooks } from '../contexts/BookContext';
+import { logout } from '../api/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export function Profile() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { userProfile, savedBooks } = useBooks();
+  const { userProfile, savedBooks, reloadUserProfile, clearUserProfile } = useBooks();
+
+  // 화면 포커스 시 사용자 프로필 다시 로드
+  useFocusEffect(
+    React.useCallback(() => {
+      reloadUserProfile();
+    }, [reloadUserProfile])
+  );
+
+  const handleLogout = async () => {
+    Alert.alert(
+      '로그아웃',
+      '정말 로그아웃하시겠습니까?',
+      [
+        {
+          text: '취소',
+          style: 'cancel',
+        },
+        {
+          text: '로그아웃',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+              await AsyncStorage.removeItem('user');
+              clearUserProfile();
+              router.replace('/');
+            } catch (error) {
+              console.error('Logout error:', error);
+              // 에러가 발생해도 로컬에서 로그아웃 처리
+              await AsyncStorage.removeItem('user');
+              clearUserProfile();
+              router.replace('/');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   // 프로필 정보가 없을 경우 로딩 또는 에러 처리
   if (!userProfile) {
@@ -34,7 +74,7 @@ export function Profile() {
     { icon: () => <Feather name="bell" size={20} color="#374151" />, label: "알림 설정", action: () => {} },
     { icon: () => <Feather name="shield" size={20} color="#374151" />, label: "개인정보 보호", action: () => {} },
     { icon: () => <Feather name="help-circle" size={20} color="#374151" />, label: "도움말", action: () => {} },
-    { icon: () => <Feather name="log-out" size={20} color="#dc2626" />, label: "로그아웃", action: () => {}, variant: "destructive" as const }
+    { icon: () => <Feather name="log-out" size={20} color="#dc2626" />, label: "로그아웃", action: handleLogout, variant: "destructive" as const }
   ];
 
   return (
@@ -50,7 +90,9 @@ export function Profile() {
             <Feather name="user" size={40} color="white" />
           </Avatar>
           <View style={{ flex: 1 }}>
-            <Text style={styles.profileName}>{userProfile.nickname}</Text>
+            <Text style={styles.profileName}>
+              {userProfile.nickname || (userProfile as any).name || '사용자'}
+            </Text>
             <Text style={styles.profileEmail}>{userProfile.email}</Text>
             <Badge variant="secondary">레벨 5 독서가</Badge>
           </View>
@@ -108,25 +150,35 @@ export function Profile() {
   );
 }
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
-  headerTitle: { fontSize: 24, fontWeight: 'bold' },
-  card: { padding: 24, marginBottom: 24 },
-  cardTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 16 },
-  profileInfoContainer: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 16 },
-  profileAvatar: { height: 80, width: 80, borderRadius: 40, backgroundColor: '#60a5fa' },
-  profileName: { fontSize: 20, fontWeight: 'bold', marginBottom: 4 },
-  profileEmail: { fontSize: 14, color: '#6b7280', marginBottom: 8 },
-  statsContainer: { flexDirection: 'row', justifyContent: 'space-around', gap: 16 },
-  statItem: { alignItems: 'center', gap: 8 },
-  statValue: { fontSize: 16, fontWeight: 'bold' },
-  statLabel: { fontSize: 12, color: '#6b7280' },
-  genresContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  noGenresText: { color: '#9ca3af' },
-  menuItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 },
-  menuItemContent: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  menuItemLabel: { fontSize: 16 },
-  destructiveText: { color: '#dc2626' },
-  footer: { marginTop: 24, paddingBottom: 24, alignItems: 'center' },
-  footerText: { fontSize: 12, color: '#9ca3af' },
+  container: { flex: 1, backgroundColor: '#fafafa', padding: 20 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 24, paddingTop: 8 },
+  headerTitle: { fontSize: 28, fontWeight: '800', color: '#111827', letterSpacing: -0.5 },
+  card: { padding: 24, marginBottom: 20, borderRadius: 16 },
+  cardTitle: { fontSize: 20, fontWeight: '700', marginBottom: 20, color: '#111827', letterSpacing: -0.3 },
+  profileInfoContainer: { flexDirection: 'row', alignItems: 'center', gap: 18, marginBottom: 20 },
+  profileAvatar: { 
+    height: 88, 
+    width: 88, 
+    borderRadius: 44, 
+    backgroundColor: '#16a34a',
+    shadowColor: '#16a34a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  profileName: { fontSize: 22, fontWeight: '700', marginBottom: 6, color: '#111827', letterSpacing: -0.3 },
+  profileEmail: { fontSize: 15, color: '#6b7280', marginBottom: 10 },
+  statsContainer: { flexDirection: 'row', justifyContent: 'space-around', gap: 20, paddingVertical: 8 },
+  statItem: { alignItems: 'center', gap: 10, minWidth: 80 },
+  statValue: { fontSize: 24, fontWeight: '700', color: '#16a34a', letterSpacing: -0.5 },
+  statLabel: { fontSize: 13, color: '#6b7280', fontWeight: '500' },
+  genresContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  noGenresText: { color: '#9ca3af', fontSize: 14, fontStyle: 'italic' },
+  menuItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 18 },
+  menuItemContent: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  menuItemLabel: { fontSize: 16, fontWeight: '500', color: '#374151' },
+  destructiveText: { color: '#dc2626', fontWeight: '600' },
+  footer: { marginTop: 32, paddingBottom: 32, alignItems: 'center' },
+  footerText: { fontSize: 13, color: '#9ca3af', fontWeight: '400' },
 });

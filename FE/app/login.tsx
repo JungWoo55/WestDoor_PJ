@@ -7,9 +7,11 @@ import { Input } from '../components/ui/Input';
 import { Feather } from '@expo/vector-icons';
 import api from '@/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useBooks } from '../contexts/BookContext';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { reloadUserProfile } = useBooks();
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -21,9 +23,12 @@ export default function LoginScreen() {
     startTransition(async () => {
       try {
         const response = await api.post('/auth/login', { email, password });
-        const user = response.data.success; // 백엔드 응답 구조에 따라 조정
+        const user = response.data.success; // 백엔드 응답 구조: { id, email, name, nickname, isCompleted }
         if (user) {
+          // 사용자 정보를 AsyncStorage에 저장
           await AsyncStorage.setItem("user", JSON.stringify(user));
+          // BookContext 프로필 정보 즉시 갱신
+          await reloadUserProfile();
         }
         
         if (user?.isCompleted === false) {
@@ -42,7 +47,7 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Link href="/" asChild>
-          <TouchableOpacity style={styles.backButton}>
+          <TouchableOpacity style={styles.backButton} activeOpacity={0.7}>
             <Feather name="chevron-left" size={24} color="#111827" />
           </TouchableOpacity>
         </Link>
@@ -89,57 +94,66 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   errorContainer: {
-    padding: 10,
-    backgroundColor: '#FFEBEE', 
-    borderRadius: 8,
+    padding: 14,
+    backgroundColor: '#FEF2F2', 
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 10, 
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
   },
   errorText: {
-    color: '#D32F2F', 
+    color: '#DC2626', 
     fontSize: 14,
     fontWeight: '500',
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#fafafa',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: '#f3f4f6',
+    backgroundColor: '#ffffff',
   },
   backButton: {
     position: 'absolute',
-    left: 16,
+    left: 20,
+    padding: 4,
   },
   title: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+    letterSpacing: -0.3,
   },
   form: {
     padding: 24,
-    gap: 16,
+    gap: 20,
   },
   inputGroup: {
-    gap: 8,
+    gap: 10,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '600',
     color: '#374151',
+    marginBottom: 4,
   },
   loginButton: {
-    height: 52,
+    height: 56,
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop: 8,
+    borderRadius: 12,
   },
   loginButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#fff',
+    letterSpacing: 0.3,
   },
 });

@@ -16,3 +16,14 @@ export const updateNickname = async (nickname: string) => {
     throw error;
   }
 };
+
+export const logout = async () => {
+  try {
+    await api.post('/auth/logout');
+    return true;
+  } catch (error) {
+    console.error('Error logging out:', error);
+    // 로그아웃 API 실패해도 로컬에서 로그아웃 처리
+    return true;
+  }
+};

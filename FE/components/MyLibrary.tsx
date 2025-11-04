@@ -85,37 +85,40 @@ export function MyLibrary() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#fafafa',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingTop: 16,
-    paddingBottom: 16,
-    paddingHorizontal: 16,
+    gap: 10,
+    paddingTop: 20,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#111827',
+    letterSpacing: -0.5,
   },
   tabsContainer: {
-    flex: 1, // 탭 컨텐츠가 남은 공간을 모두 차지하도록
-    paddingHorizontal: 16,
+    flex: 1,
+    paddingHorizontal: 20,
   },
   listContentContainer: {
-    paddingTop: 16,
+    paddingTop: 20,
     paddingBottom: 32,
-    gap: 12, // 아이템 사이의 간격
-  },
-  emptyContainer: {
-    paddingVertical: 64,
-    alignItems: 'center',
     gap: 16,
   },
+  emptyContainer: {
+    paddingVertical: 80,
+    alignItems: 'center',
+    gap: 20,
+  },
   emptyText: {
-    color: '#374151',
-    fontSize: 18,
-    fontWeight: 'bold',
+    color: '#6b7280',
+    fontSize: 17,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });
