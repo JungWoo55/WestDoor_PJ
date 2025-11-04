@@ -31,6 +31,7 @@ export const responseFromLogin = (data) => {
       name: data.payload.name,
       nickname: data.payload.nickname,
       isCompleted: data.payload.isCompleted,
+      goal: data.payload.goal,
     },
   };
 };
@@ -52,6 +53,7 @@ export const responseFromRefresh = (data) => {
       name: data.newPayload.name,
       nickname: data.newPayload.nickname,
       isCompleted: data.newPayload.isCompleted,
+      goal: data.newPayload.goal,
     },
   };
 };
@@ -79,5 +81,6 @@ export const responseFromProfile = (data) => {
     id: data.id,
     name: data.name,
     nickname: data.nickname,
+    goal: data.goal,
   };
 };
