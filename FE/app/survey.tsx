@@ -4,6 +4,12 @@ import { View, Text, StyleSheet, SafeAreaView, Alert, TouchableOpacity, ScrollVi
 import { useRouter } from 'expo-router';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { submitSurvey } from '../api/survey';
+
+import { updateProfile } from '../api/auth';
+
+import { useBooks } from '../contexts/BookContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const READING_AMOUNTS = ['안읽음', '1~2권', '3권 이상'];
 const CATEGORIES = [
@@ -14,7 +20,9 @@ const CATEGORIES = [
 
 export default function SurveyScreen() {
   const router = useRouter();
+  const { updateUserProfile } = useBooks();
   const [nickname, setNickname] = useState('');
+  const [goal, setGoal] = useState('');
   const [readingAmount, setReadingAmount] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [readingStyle, setReadingStyle] = useState('');
@@ -26,17 +34,28 @@ export default function SurveyScreen() {
   };
 
   const handleSubmit = async () => {
-    // TODO: Implement API call to submit survey data
-    console.log({ nickname, readingAmount, selectedCategories, readingStyle });
-
-    if (!nickname || !readingAmount || selectedCategories.length === 0) {
-      Alert.alert('입력 필요', '닉네임, 월간 독서량, 선호 카테고리는 필수 항목입니다.');
+    if (!nickname || !readingAmount || selectedCategories.length === 0 || !goal) {
+      Alert.alert('입력 필요', '닉네임, 독서 목표, 월간 독서량, 선호 카테고리는 필수 항목입니다.');
       return;
     }
 
-    Alert.alert('제출 완료', '설문이 제출되었습니다.', [
-      { text: 'OK', onPress: () => router.replace('/(tabs)') },
-    ]);
+    try {
+      await submitSurvey({
+        nickname,
+        readingAmount,
+        selectedCategories,
+        readingStyle,
+      });
+      await updateProfile(nickname, parseInt(goal, 10));
+      await updateUserProfile({ nickname, favoriteGenres: selectedCategories, readingGoal: parseInt(goal, 10) });
+
+      Alert.alert('제출 완료', '설문이 제출되었습니다.', [
+        { text: 'OK', onPress: () => router.replace('/(tabs)') },
+      ]);
+    } catch (error) {
+      console.error('Failed to submit survey:', error);
+      Alert.alert('제출 실패', '설문 제출 중 오류가 발생했습니다. 다시 시도해주세요.');
+    }
   };
 
   return (
@@ -54,6 +73,16 @@ export default function SurveyScreen() {
               placeholder="사용하실 닉네임을 입력하세요"
               value={nickname}
               onChangeText={setNickname}
+            />
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.label}>월간 독서 목표량을 설정해주세요.</Text>
+            <Input
+              placeholder="숫자만 입력하세요 (예: 5)"
+              value={goal}
+              onChangeText={setGoal}
+              keyboardType="number-pad"
             />
           </View>
 
@@ -115,51 +144,64 @@ export default function SurveyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb', // Light gray background
+    backgroundColor: '#fafafa',
   },
   scrollContainer: {
     paddingBottom: 40,
   },
   header: {
-    backgroundColor: '#fff',
-    padding: 24,
-    paddingBottom: 20,
+    backgroundColor: '#ffffff',
+    padding: 28,
+    paddingBottom: 24,
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: '#f3f4f6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#111827',
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 17,
     color: '#6b7280',
-    marginTop: 8,
+    marginTop: 12,
     textAlign: 'center',
+    fontWeight: '400',
+    lineHeight: 24,
   },
   form: {
-    padding: 16,
-    gap: 16,
+    padding: 20,
+    gap: 20,
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    gap: 16,
+    borderRadius: 16,
+    padding: 24,
+    gap: 20,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 2,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
   },
   label: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#374151',
+    fontSize: 19,
+    fontWeight: '700',
+    color: '#111827',
+    letterSpacing: -0.3,
+    lineHeight: 26,
   },
   selectionContainer: {
     flexDirection: 'row',
@@ -167,37 +209,46 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   chip: {
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 20,
-    backgroundColor: '#f3f4f6',
-    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 24,
+    backgroundColor: '#f9fafb',
+    borderWidth: 1.5,
     borderColor: '#e5e7eb',
   },
   chipSelected: {
     backgroundColor: '#16a34a',
     borderColor: '#16a34a',
+    shadowColor: '#16a34a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   chipText: {
     color: '#374151',
     fontWeight: '500',
-    fontSize: 14,
+    fontSize: 15,
   },
   chipTextSelected: {
     color: '#fff',
+    fontWeight: '600',
   },
   textArea: {
-    height: 100,
+    height: 110,
     textAlignVertical: 'top',
   },
   submitButton: {
-    height: 52,
+    height: 56,
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop: 8,
+    borderRadius: 12,
   },
   submitButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '600',
     color: '#fff',
+    letterSpacing: 0.3,
   },
 });
+

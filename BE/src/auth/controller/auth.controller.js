@@ -4,6 +4,7 @@ import {
   refresh,
   signUp,
   logout,
+  resign,
   setProfile,
 } from "../service/auth.service.js";
 import {
@@ -12,6 +13,7 @@ import {
   bodyToSignUp,
   bodyToLogout,
   bodyToProfile,
+  bodyToResign,
 } from "../dto/request/auth.request.dto.js";
 import { InvalidInputValueError } from "../../error.js";
 import { DateTime } from "luxon";
@@ -240,6 +242,7 @@ export const handleLogin = async (req, res, next) => {
                   nickname:{type: "string", example:"길동이"},
                   profileImage:{type: "string", example:"profile.jpg"},
                   isCompleted: {type:"boolean", example: true},
+                  goal: {type:"integer", description: "목표권수", example: 0},
                 }
               }
             }
@@ -397,6 +400,7 @@ export const handleRefresh = async (req, res, next) => {
                 email: {type:"string", example: "example@example.com"},
                 name: {type:"string", example:"홍길동"},
                 nickname: {type:"string", example: "길동이"},
+                goal: {type:"integer", description: "목표권수", example: 0},
                 isCompleted: {type:"boolean", example: true},
               }}
             }
@@ -522,6 +526,76 @@ export const handleLogout = async (req, res, next) => {
   clearTokenCookies(res);
   res.status(StatusCodes.OK).success(null);
 };
+
+/**
+ * **[Auth]**
+ *  **\<🕹️ Controller\>**
+ *  ***handleReSign***
+ *  '회원탈퇴' 기능 담당 API의 컨트롤러
+ */
+export const handleResign = async (req, res, next) => {
+  // #region 📚 Swagger: 회원탈퇴
+  /*
+    #swagger.summary = '회원탈퇴'
+    #swagger.tags = ['Auth']
+    #swagger.description = '회원탈퇴합니다.'
+    #swagger.responses[200] = {
+      description:"회원탈퇴 성공 (쿠키 저장소에서 자동 삭제 됨)",
+      content:{
+        "application/json":{
+          schema:{
+            type:"object",
+            properties:{
+              resultType: {type: "string", example: "SUCCESS"},
+              error: {type: "object", nullable: true, example: null},
+              data: {type: "object", nullable: true, example: null}
+            }
+          }
+        }
+      }
+    }
+    #swagger.responses[401] ={
+      description:"로그아웃 실패 (유효하지 않은 리프레시 토큰 - 토큰 입력 안됨)",
+      content:{
+        "application/json":{
+          schema:{
+            type:"object",
+            properties:{
+              resultType: {type: "string", example: "FAIL"},
+              error: {
+                type: "object",
+                properties:{
+                  errorCode: {type: "string", example: "I003"},
+                  reason: {type: "string", example: "유효하지 않은 인증 토큰입니다."},
+                  data: {type: "object", nullable: true, example: null}
+                }
+              },
+              data: {type: "object", nullable: true, example: null}
+            }
+          }
+        }
+      }
+    }
+  */
+  // #endregion
+  console.log("회원탈퇴가 요청되었습니다!");
+  console.log("user: ", req.user);
+  try{
+    const userId = req.user;
+    if(!userId){
+      return res.status(StatusCodes.UNAUTHORIZED).fail("인증되지 않은 사용자입니다.", "A001");
+    }
+    await resign(userId);
+    clearTokenCookies(res);
+    res.status(StatusCodes.OK).success(null);
+  } catch(error){
+    next(error);
+  }
+  
+
+};
+
+
 /**
  * **[Auth]**
  *  **\<🕹️ Controller\>**
@@ -542,6 +616,7 @@ export const handleProfile = async (req, res, next) => {
               type: "object",
               properties:{
                 nickname: {type: "string",description: "닉네임", example: "길동이"},
+                goal: {type:"integer", description: "목표권수", example: 0},
               }
             }
           }
@@ -561,7 +636,8 @@ export const handleProfile = async (req, res, next) => {
                 properties:{
                   id: {type: "number", example: 1},
                   email: {type: "string", example: "example@example.com"},
-                  nickname: {type: "string", example: "길동이"}
+                  nickname: {type: "string", example: "길동이"},
+                  goal: {type:"integer", description: "목표권수", example: 0}
                 }
               }
             }
@@ -584,7 +660,8 @@ export const handleProfile = async (req, res, next) => {
                   reason: {type: "string", example: "존재하지 않는 사용자입니다."},
                   data: {type: "object",
                     properties:{
-                      nickname: {type: "string", example: "길동이"}
+                      nickname: {type: "string", example: "길동이"},
+                      goal: {type:"integer", description: "목표권수", example: 0}
                     }
                   }
                 }
@@ -622,6 +699,7 @@ export const handleProfile = async (req, res, next) => {
   // #endregion
   console.log("프로필 설정이 요청되었습니다!");
   console.log("body:", req.body);
+  console.log("payload: ", req.payload);
   // ✅ 유효성 검사 (닉네임)
   if (!req.body.nickname) {
     throw new InvalidInputValueError("닉네임이 올바르지 않습니다.", req.body);
@@ -629,5 +707,6 @@ export const handleProfile = async (req, res, next) => {
   const profile = await setProfile(
     bodyToProfile(req.body, req.payload)
   );
+  console.log("profile: ", profile);
   res.status(StatusCodes.OK).success(profile);
 };

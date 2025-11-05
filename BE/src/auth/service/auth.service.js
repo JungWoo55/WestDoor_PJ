@@ -28,6 +28,7 @@ import {
   updateProfile,
   updateRefreshToken,
   deleteUncompletedUsers,
+  deleteAccountById,
 } from "../repository/auth.repository.js";
 /**
  * **[Auth]**
@@ -70,6 +71,7 @@ export const login = async (body) => {
     name: user.name,
     nickname: user.nickname,
     isCompleted: user.isCompleted,
+    goal: user.goal,
   };
   // 🪙 리프레시 토큰 생성
   const tokens = {};
@@ -148,6 +150,17 @@ export const logout = async (cookies) => {
   await deleteRefreshToken(refreshToken);
   return responseFromLogout(null);
 };
+
+/**
+ * **[Auth]**
+ * **\<🛠️ Service\>**
+ * ***resign***
+ * '회원탈퇴' 기능의 서비스 레이어입니다.
+ */
+export const resign = async (user)=>{
+  const userId = user.id;
+  deleteAccountById(userId);
+}
 /**
  * **[Auth]**
  * **\<🛠️ Service\>**

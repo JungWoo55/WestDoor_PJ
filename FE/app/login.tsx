@@ -7,9 +7,12 @@ import { Input } from '../components/ui/Input';
 import { Feather } from '@expo/vector-icons';
 import api from '@/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useBooks } from '../contexts/BookContext';
+import { getMySurvey } from '../api/survey';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { reloadUserProfile } = useBooks();
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -20,15 +23,41 @@ export default function LoginScreen() {
     setError(null)
     startTransition(async () => {
       try {
-        const response = await api.post('/auth/login', { email, password });
-        const user = response.data.success; // 백엔드 응답 구조에 따라 조정
-        if (user?.id) {
-          await AsyncStorage.setItem("userid", String(user.id));
+        const loginResponse = await api.post('/auth/login', { email, password });
+        console.log('login')
+        const user = loginResponse.data.success;
+
+        if (user.isCompleted === true) {
+            console.log('true')
+            const surveyResponse = await getMySurvey();
+            console.log(surveyResponse)
+            console.log()
+            const surveyData = surveyResponse.success;
+
+            const completeProfile = {
+              ...user,
+              favoriteGenres: surveyData.category || [],
+              readingAmount: surveyData.amount,
+              readingStyle: surveyData.style,
+            };
+            console.log(surveyData)
+
+            await AsyncStorage.setItem("user", JSON.stringify(user));
+            await AsyncStorage.setItem("user", JSON.stringify(completeProfile));
+            await reloadUserProfile();
+
+          if (completeProfile == null) {
+            await AsyncStorage.setItem("user", JSON.stringify(user));
+            await reloadUserProfile();
+          }
         }
         
         if (user?.isCompleted === false) {
-            router.replace("/survey"); //설문 창으로 라우터 변경해야함
-        } else{
+            await AsyncStorage.setItem("user", JSON.stringify(user));
+            await reloadUserProfile();
+            router.replace("/survey");
+        } 
+        else{
           router.replace("/(tabs)");
         }
       } catch (e: any) {
@@ -42,7 +71,7 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Link href="/" asChild>
-          <TouchableOpacity style={styles.backButton}>
+          <TouchableOpacity style={styles.backButton} activeOpacity={0.7}>
             <Feather name="chevron-left" size={24} color="#111827" />
           </TouchableOpacity>
         </Link>
@@ -89,57 +118,66 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   errorContainer: {
-    padding: 10,
-    backgroundColor: '#FFEBEE', 
-    borderRadius: 8,
+    padding: 14,
+    backgroundColor: '#FEF2F2', 
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 10, 
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
   },
   errorText: {
-    color: '#D32F2F', 
+    color: '#DC2626', 
     fontSize: 14,
     fontWeight: '500',
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#fafafa',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: '#f3f4f6',
+    backgroundColor: '#ffffff',
   },
   backButton: {
     position: 'absolute',
-    left: 16,
+    left: 20,
+    padding: 4,
   },
   title: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+    letterSpacing: -0.3,
   },
   form: {
     padding: 24,
-    gap: 16,
+    gap: 20,
   },
   inputGroup: {
-    gap: 8,
+    gap: 10,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '600',
     color: '#374151',
+    marginBottom: 4,
   },
   loginButton: {
-    height: 52,
+    height: 56,
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop: 8,
+    borderRadius: 12,
   },
   loginButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#fff',
+    letterSpacing: 0.3,
   },
 });

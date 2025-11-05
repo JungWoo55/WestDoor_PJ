@@ -1,16 +1,10 @@
 
-import React, { createContext, ReactNode, useContext, useState } from 'react';
+import React, { createContext, ReactNode, useContext, useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
-import { Book } from '../types';
+import { Book, UserProfile } from '../types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getMySurvey } from '@/api/survey';
 
-// 프로필 정보 타입 정의
-export interface UserProfile {
-  email: string;
-  nickname: string;
-  bio: string;
-  favoriteGenres: string[];
-  readingGoal: number;
-}
 
 // 컨텍스트 타입 정의
 interface BookContextType {
@@ -20,24 +14,67 @@ interface BookContextType {
   removeFromLibrary: (bookId: string) => void;
   userProfile: UserProfile | null;
   updateUserProfile: (profile: Partial<UserProfile>) => void;
+  reloadUserProfile: () => Promise<void>;
+  clearUserProfile: () => void;
 }
 
 // 컨텍스트 생성
 const BookContext = createContext<BookContextType | undefined>(undefined);
 
-// 가상의 초기 프로필 정보
-const initialProfile: UserProfile = {
-  email: 'bookworm@example.com',
-  nickname: '독서광',
-  bio: '책 읽는 것을 좋아합니다.',
-  favoriteGenres: ['소설', '자기계발'],
-  readingGoal: 50,
-};
-
 // 프로바이더 컴포넌트 생성
 export const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [savedBooks, setSavedBooks] = useState<Book[]>([]);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(initialProfile);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  const loadUserProfile = useCallback(async () => {
+    const storedUser = await AsyncStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        const userData = parsedUser.user || parsedUser;
+
+        if (userData.isCompleted) {
+          const surveyResponse = await getMySurvey();
+          const surveyData = surveyResponse.success;
+          const completeProfile = {
+            ...userData,
+            favoriteGenres: surveyData.category || [],
+            readingAmount: surveyData.amount,
+            readingStyle: surveyData.style,
+            readingGoal: userData.goal || 0,
+          };
+          setUserProfile(completeProfile);
+          await AsyncStorage.setItem('user', JSON.stringify(completeProfile));
+        } else {
+          setUserProfile({
+            id: userData.id || 0,
+            email: userData.email || '',
+            nickname: userData.nickname || userData.name || '',
+            name: userData.name,
+            bio: userData.bio || '',
+            favoriteGenres: userData.favoriteGenres || [],
+            readingGoal: userData.readingGoal || 0,
+            readingAmount: userData.readingAmount || 0,
+            readingStyle: userData.readingStyle || '',
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load or process user profile:', error);
+        setUserProfile(null)
+      }
+    } else {
+      setUserProfile(null);
+    }
+  }, []);
+
+  const clearUserProfile = useCallback(() => {
+    setUserProfile(null);
+    setSavedBooks([]);
+  }, []);
+
+  useEffect(() => {
+    loadUserProfile();
+  }, [loadUserProfile]);
 
   const addToLibrary = (book: Book) => {
     setSavedBooks((prev) => {
@@ -54,18 +91,32 @@ export const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   };
 
-  const removeFromLibrary = (bookId: string) => {
+  const removeFromLibrary = useCallback((bookId: string) => {
     setSavedBooks((prev) => prev.filter((book) => book.id !== bookId));
-  };
+  }, []);
 
-  const updateUserProfile = (profileUpdates: Partial<UserProfile>) => {
-    setUserProfile(prev => prev ? { ...prev, ...profileUpdates } : null);
+  const updateUserProfile = async (profileUpdates: Partial<UserProfile>) => {
+    setUserProfile(prevProfile => {
+      const newUserProfile = { ...(prevProfile || {}), ...profileUpdates } as UserProfile;
+      AsyncStorage.setItem('user', JSON.stringify(newUserProfile))
+        .catch(e => console.error("Failed to save user profile to AsyncStorage", e));
+      return newUserProfile;
+    });
   };
 
   const savedBookIds = savedBooks.map((book) => book.id);
 
   return (
-    <BookContext.Provider value={{ savedBooks, savedBookIds, addToLibrary, removeFromLibrary, userProfile, updateUserProfile }}>
+    <BookContext.Provider value={{ 
+      savedBooks, 
+      savedBookIds, 
+      addToLibrary, 
+      removeFromLibrary, 
+      userProfile, 
+      updateUserProfile,
+      reloadUserProfile: loadUserProfile,
+      clearUserProfile,
+    }}>
       {children}
     </BookContext.Provider>
   );

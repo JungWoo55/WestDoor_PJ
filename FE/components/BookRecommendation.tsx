@@ -113,12 +113,35 @@ export function BookRecommendation() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  headerSection: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 32, paddingHorizontal: 16 },
-  mainHeaderTitle: { fontSize: 24, fontWeight: 'bold' },
-  section: { marginBottom: 32 },
-  subSectionHeader: { marginBottom: 16, paddingHorizontal: 16 },
-  subHeaderTitle: { fontSize: 18, fontWeight: 'bold' },
-  horizontalScroll: { gap: 12, paddingHorizontal: 16 },
-  errorText: { textAlign: 'center', color: '#ef4444', marginTop: 40 },
+  container: { flex: 1, backgroundColor: '#fafafa' },
+  headerSection: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 10, 
+    marginBottom: 32, 
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  mainHeaderTitle: { 
+    fontSize: 28, 
+    fontWeight: '800', 
+    color: '#111827',
+    letterSpacing: -0.5,
+  },
+  section: { marginBottom: 40 },
+  subSectionHeader: { marginBottom: 20, paddingHorizontal: 20 },
+  subHeaderTitle: { 
+    fontSize: 20, 
+    fontWeight: '700', 
+    color: '#111827',
+    letterSpacing: -0.3,
+  },
+  horizontalScroll: { gap: 16, paddingHorizontal: 20 },
+  errorText: { 
+    textAlign: 'center', 
+    color: '#ef4444', 
+    marginTop: 60,
+    fontSize: 16,
+    fontWeight: '500',
+  },
 });

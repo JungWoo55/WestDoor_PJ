@@ -107,10 +107,10 @@ export const handleCreateSurvey = async (req, res, next) => {
     console.log("설문 생성이 요청되었습니다.")
     console.log("body:", req.body);
     console.log("user:", req.user);
-    
+
     try{
         const {id: userId} = req.user; // auth 미들웨어에서 주입된 userId
-        if (!req.body.amount){
+        if (!req.body.amount && req.body.amount != 0){
             throw new InvalidInputValueError("amount가 누락되었습니다.", req.body);
         }
         if (!req.body.category){
@@ -118,6 +118,7 @@ export const handleCreateSurvey = async (req, res, next) => {
         }
         const newSurvey = await createUserSurvey(userId,bodyToSurvey(req.body));
         const responseDto = responseFromSurvey(newSurvey);
+        
         res.status(StatusCodes.CREATED).success(responseDto);
     } catch(error) {
         next(error);
@@ -306,7 +307,7 @@ export const handleEditSurvey = async (req, res, next) => {
     
     try{
         const {id: userId} = req.user; // auth 미들웨어에서 주입된 userId
-        if (!req.body.amount){
+        if (!req.body.amount && req.body.amount != 0){
             throw new InvalidInputValueError("amount가 누락되었습니다.", req.body);
         }
         if (!req.body.category){

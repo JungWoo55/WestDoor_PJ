@@ -40,7 +40,7 @@ export const updateProfile = async (data) => {
     },
     data: {
       nickname: data.nickname,
-      profile: data.profileImageName,
+      goal: data.goal,
       isCompleted: data.isCompleted,
     },
   });
@@ -59,6 +59,7 @@ export const findAccount = async (data) => {
   const user = await prisma.user.findUnique({
     select: {
       nickname: true,
+      goal: true,
       email: true,
       id: true,
       name:true,
@@ -73,6 +74,36 @@ export const findAccount = async (data) => {
   const isMatch = await bcrypt.compare(data.password, user.password);
   if (!isMatch) return -2;
   return user;
+};
+
+/**
+ * **[Auth]**
+ * **\<📦 Repository\>**
+ * ***deleteAccountById***
+ * '회원탈퇴' 기능의 레포지토리 레이어 입니다. DB의 유저 테이블에서 유저 아이디를 통해 유저 정보를 삭제합니다.
+ * @param {number} userId
+ * @returns {object}
+ */
+export const deleteAccountById = async (userId) => {
+  await prisma.user.delete({
+    where: {
+      id: userId,
+    },
+  });
+  try{
+    await prisma.survey.delete({
+      where: {
+        userId: userId,
+      },
+    });
+    await prisma.survey.delete({
+      where: {
+        userId: userId,
+      },
+    });
+  }catch(error){
+    return;
+  }
 };
 /**
  * **[Auth]**
@@ -165,6 +196,7 @@ export const findAccountById = async (id) => {
     select: {
       name: true,
       nickname: true,
+      goal: true,
       email: true,
       id: true,
       password: true,
