@@ -32,15 +32,17 @@ export const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const parsedUser = JSON.parse(storedUser);
         // 백엔드 응답 구조에 맞게 user 객체에서 데이터 추출 (중첩된 경우 대비)
         const userData = parsedUser.user || parsedUser;
-        setUserProfile({
-          id: userData.id || 0,
-          email: userData.email || '',
-          nickname: userData.nickname || userData.name || '',
-          name: userData.name,
-          bio: userData.bio || '',
-          favoriteGenres: userData.favoriteGenres || [],
-          readingGoal: userData.readingGoal || 0,
-        });
+          setUserProfile({
+            id: userData.id || 0,
+            email: userData.email || '',
+            nickname: userData.nickname || userData.name || '',
+            name: userData.name,
+            bio: userData.bio || '',
+            favoriteGenres: userData.favoriteGenres || [],
+            readingGoal: userData.readingGoal || 0,
+            readingAmount: userData.readingAmount || 0,
+            readingStyle: userData.readingStyle || '',
+          });
       } catch (error) {
         console.error('Failed to parse user profile:', error);
       }

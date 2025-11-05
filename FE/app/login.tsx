@@ -8,6 +8,7 @@ import { Feather } from '@expo/vector-icons';
 import api from '@/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useBooks } from '../contexts/BookContext';
+import { getMySurvey } from '../api/survey';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -22,17 +23,36 @@ export default function LoginScreen() {
     setError(null)
     startTransition(async () => {
       try {
-        const response = await api.post('/auth/login', { email, password });
-        const user = response.data.success; // 백엔드 응답 구조: { id, email, name, nickname, isCompleted }
-        if (user) {
-          // 사용자 정보를 AsyncStorage에 저장
-          await AsyncStorage.setItem("user", JSON.stringify(user));
-          // BookContext 프로필 정보 즉시 갱신
-          await reloadUserProfile();
+        const loginResponse = await api.post('/auth/login', { email, password });
+        console.log('login')
+        const user = loginResponse.data.success;
+
+        if (user.isCompleted === true) {
+            console.log('true')
+            const surveyResponse = await getMySurvey();
+            console.log(surveyResponse)
+            console.log()
+            const surveyData = surveyResponse.success;
+
+            const completeProfile = {
+              ...user,
+              favoriteGenres: surveyData.category || [],
+              readingAmount: surveyData.amount,
+              readingStyle: surveyData.style,
+            };
+            console.log(surveyData)
+
+            await AsyncStorage.setItem("user", JSON.stringify(completeProfile));
+            await reloadUserProfile();
+
+          if (completeProfile == null) {
+            await AsyncStorage.setItem("user", JSON.stringify(user));
+            await reloadUserProfile();
+          }
         }
         
         if (user?.isCompleted === false) {
-            router.replace("/survey"); //설문 창으로 라우터 변경해야함
+            router.replace("/survey");
         } else{
           router.replace("/(tabs)");
         }

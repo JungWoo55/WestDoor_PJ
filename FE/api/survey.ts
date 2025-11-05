@@ -27,3 +27,13 @@ export const submitSurvey = async (surveyData: {
     throw error;
   }
 };
+
+export const getMySurvey = async () => {
+  try {
+    const response = await api.get('/survey');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching survey:', error);
+    throw error;
+  }
+};

@@ -25,4 +25,6 @@ export interface UserProfile {
   bio: string;
   favoriteGenres: string[];
   readingGoal: number;
+  readingAmount: number;
+  readingStyle: string;
 }
