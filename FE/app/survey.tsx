@@ -9,6 +9,7 @@ import { submitSurvey } from '../api/survey';
 import { updateProfile } from '../api/auth';
 
 import { useBooks } from '../contexts/BookContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const READING_AMOUNTS = ['안읽음', '1~2권', '3권 이상'];
 const CATEGORIES = [
@@ -47,6 +48,7 @@ export default function SurveyScreen() {
       });
       await updateProfile(nickname, parseInt(goal, 10));
       await updateUserProfile({ nickname, favoriteGenres: selectedCategories, readingGoal: parseInt(goal, 10) });
+
       Alert.alert('제출 완료', '설문이 제출되었습니다.', [
         { text: 'OK', onPress: () => router.replace('/(tabs)') },
       ]);
@@ -249,3 +251,4 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 });
+

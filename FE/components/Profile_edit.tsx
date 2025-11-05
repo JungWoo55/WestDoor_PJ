@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   ScrollView,
@@ -15,40 +14,57 @@ import { Input } from './ui/Input';
 import { Separator } from './ui/Separator';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useBooks } from '../contexts/BookContext'; // 컨텍스트 훅 임포트
+import { useBooks } from '../contexts/BookContext';
+import { updateSurvey } from '../api/survey';
+import { updateProfile } from '../api/auth';
+import { useRouter } from 'expo-router';
 
-const allGenres = ["소설", "자기계발", "에세이", "과학", "역사", "IT/기술", "경제", "인문"];
+const CATEGORIES = [
+  '건강', '경제/경영', '과학', '기술', '만화', '소설', '시/에세이', '어린이/초등', 
+  '여행', '역사', '대중문화', '외국어', '요리', '인문', '자기계발', '유아', 
+  '잡지', '정치사회', '종교', '청소년', 'IT', '취미/스포츠'
+];
+const readingAmounts = ["안읽음", "1~2권", "3권 이상"];
+
+const getReadingAmountIndex = (amount: number | undefined) => {
+  if (amount === 0) return 0; // "안읽음"
+  if (amount === 1) return 1; // "1~2권"
+  if (amount === 3) return 2; // "3권 이상"
+  return null; // 기본값 또는 유효하지 않은 경우
+};
 
 export function Profile_edit() {
   const insets = useSafeAreaInsets();
-  const { userProfile, updateUserProfile } = useBooks();
+  const router = useRouter();
+  const { userProfile, reloadUserProfile } = useBooks();
 
-  // 컨텍스트의 userProfile로 내부 상태 초기화
   const [nickname, setNickname] = useState(userProfile?.nickname || '');
-  const [bio, setBio] = useState(userProfile?.bio || '');
   const [selectedGenres, setSelectedGenres] = useState(userProfile?.favoriteGenres || []);
-  const [readingGoal, setReadingGoal] = useState(userProfile?.readingGoal.toString() || '0');
+  const [readingAmount, setReadingAmount] = useState<number | null>(getReadingAmountIndex(userProfile?.readingAmount));
+  const [readingStyle, setReadingStyle] = useState(userProfile?.readingStyle || '');
+  const [readingGoal, setReadingGoal] = useState(userProfile?.readingGoal?.toString() || '');
 
-  // 컨텍스트의 프로필이 변경될 때 상태를 동기화 (선택적)
   useEffect(() => {
     if (userProfile) {
       setNickname(userProfile.nickname);
-      setBio(userProfile.bio);
       setSelectedGenres(userProfile.favoriteGenres);
-      setReadingGoal(userProfile.readingGoal.toString());
+      setReadingAmount(getReadingAmountIndex(userProfile.readingAmount));
+      setReadingStyle(userProfile.readingStyle);
+      setReadingGoal(userProfile.readingGoal?.toString() || '');
     }
   }, [userProfile]);
 
-  // 변경 여부 확인
   const isChanged = useMemo(() => {
     if (!userProfile) return false;
+    const currentReadingAmount = userProfile.readingAmount !== undefined ? userProfile.readingAmount : null;
     return (
       nickname !== userProfile.nickname ||
-      bio !== userProfile.bio ||
-      readingGoal !== userProfile.readingGoal.toString() ||
+      readingAmount !== currentReadingAmount ||
+      readingStyle !== userProfile.readingStyle ||
+      readingGoal !== userProfile.readingGoal?.toString() ||
       JSON.stringify(selectedGenres.sort()) !== JSON.stringify(userProfile.favoriteGenres.sort())
     );
-  }, [nickname, bio, readingGoal, selectedGenres, userProfile]);
+  }, [nickname, selectedGenres, readingAmount, readingStyle, readingGoal, userProfile]);
 
   const handleGenreToggle = (genre: string) => {
     setSelectedGenres((prev) =>
@@ -56,18 +72,34 @@ export function Profile_edit() {
     );
   };
 
-  const handleSave = () => {
-    const newProfile = {
-      nickname,
-      bio,
-      favoriteGenres: selectedGenres,
-      readingGoal: parseInt(readingGoal, 10) || 0,
-    };
-    updateUserProfile(newProfile);
-    Alert.alert("저장 완료", "프로필 정보가 성공적으로 업데이트되었습니다.");
+  const handleSave = async () => {
+    if (!userProfile) return;
+    console.log(userProfile)
+    console.log(nickname)
+    console.log(readingGoal)
+
+    try {
+      // 1. auth API 호출 (닉네임, 목표 독서량)
+      await updateProfile(nickname, parseInt(readingGoal, 10) || 0);
+
+      // 2. survey API 호출 (월간 독서량, 선호 장르, 독서 스타일)
+      await updateSurvey({
+        readingAmount: readingAmount !== null ? readingAmounts[readingAmount] : null, // 숫자를 문자열로 변환하여 전달
+        selectedCategories: selectedGenres,
+        readingStyle,
+      });
+
+      // 3. 성공 시 프로필 리로드 및 뒤로가기
+      await reloadUserProfile();
+      Alert.alert("저장 완료", "프로필 정보가 성공적으로 업데이트되었습니다.", [
+        { text: "확인", onPress: () => router.back() },
+      ]);
+    } catch (error) {
+      console.error('Profile update error:', error);
+      Alert.alert("오류", "프로필 업데이트 중 오류가 발생했습니다.");
+    }
   };
 
-  // ... (나머지 핸들러 함수들은 동일) ...
   const handleImagePicker = () => {
     Alert.alert("프로필 사진 변경", "이미지 라이브러리를 여는 기능이 여기에 추가됩니다.");
   };
@@ -98,7 +130,6 @@ export function Profile_edit() {
         </Button>
       </View>
 
-      {/* 프로필 정보 섹션 */}
       <Card style={styles.card}>
         <View style={styles.avatarSection}>
           <TouchableOpacity onPress={handleImagePicker}>
@@ -114,19 +145,34 @@ export function Profile_edit() {
           <Text style={styles.label}>닉네임</Text>
           <Input value={nickname} onChangeText={setNickname} placeholder="닉네임을 입력하세요" />
         </View>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>자기소개</Text>
-          <Input value={bio} onChangeText={setBio} placeholder="한 줄로 자신을 소개해보세요" multiline />
-        </View>
       </Card>
 
-      {/* 독서 취향 섹션 */}
       <Card style={styles.card}>
         <Text style={styles.cardTitle}>독서 취향</Text>
         <View style={styles.inputGroup}>
+          <Text style={styles.label}>목표 독서량</Text>
+          <Input value={readingGoal} onChangeText={setReadingGoal} placeholder="목표 독서량을 입력하세요" keyboardType="number-pad" />
+        </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>월간 독서량</Text>
+          <View style={styles.genresContainer}>
+            {readingAmounts.map((amount, index) => (
+              <TouchableOpacity
+                key={amount}
+                style={[styles.genreChip, readingAmount === index && styles.genreChipSelected]}
+                onPress={() => setReadingAmount(index)}
+              >
+                <Text style={[styles.genreText, readingAmount === index && styles.genreTextSelected]}>
+                  {amount}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+        <View style={styles.inputGroup}>
           <Text style={styles.label}>선호 장르 (여러 개 선택 가능)</Text>
           <View style={styles.genresContainer}>
-            {allGenres.map((genre) => (
+            {CATEGORIES.map((genre) => (
               <TouchableOpacity
                 key={genre}
                 style={[styles.genreChip, selectedGenres.includes(genre) && styles.genreChipSelected]}
@@ -140,12 +186,11 @@ export function Profile_edit() {
           </View>
         </View>
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>올해의 독서 목표 (권)</Text>
-          <Input value={readingGoal} onChangeText={setReadingGoal} placeholder="예: 50" keyboardType="number-pad" />
+          <Text style={styles.label}>독서 스타일</Text>
+          <Input value={readingStyle} onChangeText={setReadingStyle} placeholder="독서 스타일을 입력하세요" multiline />
         </View>
       </Card>
 
-      {/* 계정 관리 섹션 */}
       <Card style={styles.card}>
         <Text style={styles.cardTitle}>계정 관리</Text>
         <View style={styles.inputGroup}>

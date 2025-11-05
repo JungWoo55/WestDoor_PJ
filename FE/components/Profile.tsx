@@ -20,10 +20,11 @@ export function Profile() {
   // 화면 포커스 시 사용자 프로필 다시 로드
   useFocusEffect(
     React.useCallback(() => {
+      console.log('profile')
       reloadUserProfile();
     }, [reloadUserProfile])
   );
-
+  
   const handleLogout = async () => {
     Alert.alert(
       '로그아웃',
@@ -64,10 +65,16 @@ export function Profile() {
     );
   }
 
-  // 동적으로 계산되는 통계
+  const readingAmountMap: { [key: number]: string } = {
+    0: '안읽음',
+    1: '1~2권',
+    3: '3권 이상',
+  };
+
   const userStats = [
     { label: "읽은 책", value: `${savedBooks.length}권` },
-    { label: "독서 목표", value: `${userProfile.readingGoal > 0 ? Math.round((savedBooks.length / userProfile.readingGoal) * 100) : 0}%` },
+    { label: "목표 독서량", value: `${userProfile.readingGoal || 0}권` },
+    { label: "월간 독서량", value: readingAmountMap[userProfile.readingAmount] || '정보 없음' },
   ];
 
   const menuItems = [
@@ -94,7 +101,6 @@ export function Profile() {
               {userProfile.nickname || (userProfile as any).name || '사용자'}
             </Text>
             <Text style={styles.profileEmail}>{userProfile.email}</Text>
-            <Badge variant="secondary">레벨 5 독서가</Badge>
           </View>
         </View>
         <Button variant="outline" onPress={() => router.push('/profile-edit')}>프로필 수정</Button>
@@ -114,14 +120,25 @@ export function Profile() {
       </Card>
 
       <Card style={styles.card}>
-        <Text style={styles.cardTitle}>선호 장르</Text>
+        <Text style={styles.cardTitle}>선호 카테고리</Text>
         <View style={styles.genresContainer}>
-          {userProfile.favoriteGenres.length > 0 ? (
+          {userProfile.favoriteGenres && userProfile.favoriteGenres.length > 0 ? (
             userProfile.favoriteGenres.map((genre) => (
               <Badge key={genre} variant="outline">{genre}</Badge>
             ))
           ) : (
-            <Text style={styles.noGenresText}>선호하는 장르가 없습니다.</Text>
+            <Text style={styles.noGenresText}>선호하는 카테고리가 없습니다.</Text>
+          )}
+        </View>
+      </Card>
+      
+      <Card style={styles.card}>
+        <Text style={styles.cardTitle}>독서 스타일</Text>
+        <View style={styles.genresContainer}>
+          {userProfile.readingStyle ? (
+            <Text variant="outline">{userProfile.readingStyle}</Text>
+          ) : (
+            <Text style={styles.noGenresText}>독서 스타일이 지정되지 않았습니다.</Text>
           )}
         </View>
       </Card>

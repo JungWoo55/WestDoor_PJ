@@ -1,10 +1,10 @@
 import api from './index';
 
 export const updateProfile = async (nickname: string, goal: number) => {
-  const formData = new FormData();
+    const formData = new FormData();
   formData.append('nickname', nickname);
   formData.append('goal', String(goal));
-
+  
   try {
     const response = await api.post('/auth/profile', formData, {
       headers: {

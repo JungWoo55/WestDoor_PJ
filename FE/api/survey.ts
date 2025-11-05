@@ -37,3 +37,23 @@ export const getMySurvey = async () => {
     throw error;
   }
 };
+
+export const updateSurvey = async (surveyData: {
+  readingAmount: string | null;
+  selectedCategories: string[];
+  readingStyle: string;
+}) => {
+  const transformedData = {
+    amount: readingAmountToNumber(surveyData.readingAmount),
+    category: surveyData.selectedCategories,
+    style: surveyData.readingStyle,
+  };
+
+  try {
+    const response = await api.patch('/survey', transformedData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating survey:', error);
+    throw error;
+  }
+};

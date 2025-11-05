@@ -42,6 +42,7 @@ export default function LoginScreen() {
             };
             console.log(surveyData)
 
+            await AsyncStorage.setItem("user", JSON.stringify(user));
             await AsyncStorage.setItem("user", JSON.stringify(completeProfile));
             await reloadUserProfile();
 
@@ -52,8 +53,11 @@ export default function LoginScreen() {
         }
         
         if (user?.isCompleted === false) {
+            await AsyncStorage.setItem("user", JSON.stringify(user));
+            await reloadUserProfile();
             router.replace("/survey");
-        } else{
+        } 
+        else{
           router.replace("/(tabs)");
         }
       } catch (e: any) {

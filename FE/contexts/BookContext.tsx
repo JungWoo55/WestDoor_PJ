@@ -1,8 +1,9 @@
 
-import React, { createContext, ReactNode, useContext, useState, useEffect } from 'react';
+import React, { createContext, ReactNode, useContext, useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { Book, UserProfile } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getMySurvey } from '@/api/survey';
 
 
 // 컨텍스트 타입 정의
@@ -25,13 +26,26 @@ export const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [savedBooks, setSavedBooks] = useState<Book[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  const loadUserProfile = async () => {
+  const loadUserProfile = useCallback(async () => {
     const storedUser = await AsyncStorage.getItem('user');
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        // 백엔드 응답 구조에 맞게 user 객체에서 데이터 추출 (중첩된 경우 대비)
         const userData = parsedUser.user || parsedUser;
+
+        if (userData.isCompleted) {
+          const surveyResponse = await getMySurvey();
+          const surveyData = surveyResponse.success;
+          const completeProfile = {
+            ...userData,
+            favoriteGenres: surveyData.category || [],
+            readingAmount: surveyData.amount,
+            readingStyle: surveyData.style,
+            readingGoal: userData.goal || 0,
+          };
+          setUserProfile(completeProfile);
+          await AsyncStorage.setItem('user', JSON.stringify(completeProfile));
+        } else {
           setUserProfile({
             id: userData.id || 0,
             email: userData.email || '',
@@ -43,23 +57,24 @@ export const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             readingAmount: userData.readingAmount || 0,
             readingStyle: userData.readingStyle || '',
           });
+        }
       } catch (error) {
-        console.error('Failed to parse user profile:', error);
+        console.error('Failed to load or process user profile:', error);
+        setUserProfile(null)
       }
     } else {
-      // 저장된 사용자 정보가 없으면 프로필 초기화
       setUserProfile(null);
     }
-  };
+  }, []);
 
-  const clearUserProfile = () => {
+  const clearUserProfile = useCallback(() => {
     setUserProfile(null);
     setSavedBooks([]);
-  };
+  }, []);
 
   useEffect(() => {
     loadUserProfile();
-  }, []);
+  }, [loadUserProfile]);
 
   const addToLibrary = (book: Book) => {
     setSavedBooks((prev) => {
@@ -76,9 +91,9 @@ export const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   };
 
-  const removeFromLibrary = (bookId: string) => {
+  const removeFromLibrary = useCallback((bookId: string) => {
     setSavedBooks((prev) => prev.filter((book) => book.id !== bookId));
-  };
+  }, []);
 
   const updateUserProfile = async (profileUpdates: Partial<UserProfile>) => {
     setUserProfile(prevProfile => {
