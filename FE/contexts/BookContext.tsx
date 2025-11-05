@@ -1,19 +1,9 @@
 
 import React, { createContext, ReactNode, useContext, useState, useEffect } from 'react';
 import { Alert } from 'react-native';
-import { Book } from '../types';
+import { Book, UserProfile } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// 프로필 정보 타입 정의
-export interface UserProfile {
-  id: number;
-  email: string;
-  nickname: string;
-  name?: string; // 백엔드에서 제공하는 name 필드 (선택적)
-  bio: string;
-  favoriteGenres: string[];
-  readingGoal: number;
-}
 
 // 컨텍스트 타입 정의
 interface BookContextType {

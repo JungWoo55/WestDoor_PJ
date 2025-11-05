@@ -6,7 +6,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { submitSurvey } from '../api/survey';
 
-import { updateNickname } from '../api/auth';
+import { updateProfile } from '../api/auth';
 
 import { useBooks } from '../contexts/BookContext';
 
@@ -21,6 +21,7 @@ export default function SurveyScreen() {
   const router = useRouter();
   const { updateUserProfile } = useBooks();
   const [nickname, setNickname] = useState('');
+  const [goal, setGoal] = useState('');
   const [readingAmount, setReadingAmount] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [readingStyle, setReadingStyle] = useState('');
@@ -32,8 +33,8 @@ export default function SurveyScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!nickname || !readingAmount || selectedCategories.length === 0) {
-      Alert.alert('입력 필요', '닉네임, 월간 독서량, 선호 카테고리는 필수 항목입니다.');
+    if (!nickname || !readingAmount || selectedCategories.length === 0 || !goal) {
+      Alert.alert('입력 필요', '닉네임, 독서 목표, 월간 독서량, 선호 카테고리는 필수 항목입니다.');
       return;
     }
 
@@ -44,8 +45,8 @@ export default function SurveyScreen() {
         selectedCategories,
         readingStyle,
       });
-      await updateNickname(nickname);
-      await updateUserProfile({ nickname, favoriteGenres: selectedCategories });
+      await updateProfile(nickname, parseInt(goal, 10));
+      await updateUserProfile({ nickname, favoriteGenres: selectedCategories, readingGoal: parseInt(goal, 10) });
       Alert.alert('제출 완료', '설문이 제출되었습니다.', [
         { text: 'OK', onPress: () => router.replace('/(tabs)') },
       ]);
@@ -70,6 +71,16 @@ export default function SurveyScreen() {
               placeholder="사용하실 닉네임을 입력하세요"
               value={nickname}
               onChangeText={setNickname}
+            />
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.label}>월간 독서 목표량을 설정해주세요.</Text>
+            <Input
+              placeholder="숫자만 입력하세요 (예: 5)"
+              value={goal}
+              onChangeText={setGoal}
+              keyboardType="number-pad"
             />
           </View>
 

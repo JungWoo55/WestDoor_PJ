@@ -1,8 +1,9 @@
 import api from './index';
 
-export const updateNickname = async (nickname: string) => {
+export const updateProfile = async (nickname: string, goal: number) => {
   const formData = new FormData();
   formData.append('nickname', nickname);
+  formData.append('goal', String(goal));
 
   try {
     const response = await api.post('/auth/profile', formData, {
@@ -12,7 +13,7 @@ export const updateNickname = async (nickname: string) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Error updating nickname:', error);
+    console.error('Error updating profile:', error);
     throw error;
   }
 };
