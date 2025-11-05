@@ -9,7 +9,7 @@ import { Separator } from './ui/Separator';
 import { Feather, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBooks } from '../contexts/BookContext';
-import { logout } from '../api/auth';
+import { logout} from '../api/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export function Profile() {
@@ -20,11 +20,11 @@ export function Profile() {
   // 화면 포커스 시 사용자 프로필 다시 로드
   useFocusEffect(
     React.useCallback(() => {
-      console.log('profile')
       reloadUserProfile();
+      console.log('profile')
     }, [reloadUserProfile])
   );
-  
+
   const handleLogout = async () => {
     Alert.alert(
       '로그아웃',

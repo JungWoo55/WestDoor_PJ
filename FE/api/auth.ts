@@ -4,7 +4,7 @@ export const updateProfile = async (nickname: string, goal: number) => {
     const formData = new FormData();
   formData.append('nickname', nickname);
   formData.append('goal', String(goal));
-  
+
   try {
     const response = await api.post('/auth/profile', formData, {
       headers: {
@@ -15,6 +15,16 @@ export const updateProfile = async (nickname: string, goal: number) => {
   } catch (error) {
     console.error('Error updating profile:', error);
     throw error;
+  }
+};
+
+export const refresh = async () => {
+  try {
+    await api.post('/auth/refresh');
+    return true;
+  } catch (error) {
+    console.error('Error refresh:', error);
+    return true;
   }
 };
 

@@ -14,9 +14,10 @@ import { Input } from './ui/Input';
 import { Separator } from './ui/Separator';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useBooks } from '../contexts/BookContext';
-import { updateSurvey } from '../api/survey';
-import { updateProfile } from '../api/auth';
+import { getMySurvey, updateSurvey } from '../api/survey';
+import { refresh, updateProfile } from '../api/auth';
 import { useRouter } from 'expo-router';
 
 const CATEGORIES = [
@@ -36,7 +37,7 @@ const getReadingAmountIndex = (amount: number | undefined) => {
 export function Profile_edit() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { userProfile, reloadUserProfile } = useBooks();
+  const { userProfile, reloadUserProfile, updateUserProfile } = useBooks();
 
   const [nickname, setNickname] = useState(userProfile?.nickname || '');
   const [selectedGenres, setSelectedGenres] = useState(userProfile?.favoriteGenres || []);
@@ -46,7 +47,7 @@ export function Profile_edit() {
 
   useEffect(() => {
     if (userProfile) {
-      setNickname(userProfile.nickname);
+      setNickname(userProfile?.nickname);
       setSelectedGenres(userProfile.favoriteGenres);
       setReadingAmount(getReadingAmountIndex(userProfile.readingAmount));
       setReadingStyle(userProfile.readingStyle);
@@ -74,22 +75,31 @@ export function Profile_edit() {
 
   const handleSave = async () => {
     if (!userProfile) return;
-    console.log(userProfile)
-    console.log(nickname)
-    console.log(readingGoal)
 
     try {
-      // 1. auth API 호출 (닉네임, 목표 독서량)
+      // 1. auth API 호출
       await updateProfile(nickname, parseInt(readingGoal, 10) || 0);
 
-      // 2. survey API 호출 (월간 독서량, 선호 장르, 독서 스타일)
+      // 2. AsyncStorage 직접 업데이트
+      const storedUser = await AsyncStorage.getItem('user');
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        const updatedUser = { 
+          ...parsedUser, 
+          nickname: nickname, 
+          goal: parseInt(readingGoal, 10) || 0 
+        };
+        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+
+      // 3. survey API 호출
       await updateSurvey({
-        readingAmount: readingAmount !== null ? readingAmounts[readingAmount] : null, // 숫자를 문자열로 변환하여 전달
+        readingAmount: readingAmount !== null ? readingAmounts[readingAmount] : null, 
         selectedCategories: selectedGenres,
         readingStyle,
       });
 
-      // 3. 성공 시 프로필 리로드 및 뒤로가기
+      // 4. 성공 시 프로필 리로드 및 뒤로가기
       await reloadUserProfile();
       Alert.alert("저장 완료", "프로필 정보가 성공적으로 업데이트되었습니다.", [
         { text: "확인", onPress: () => router.back() },
