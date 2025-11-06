@@ -28,3 +28,12 @@ export interface UserProfile {
   readingAmount: number;
   readingStyle: string;
 }
+
+export interface LibraryBook {
+  id: number;
+  isbn: string;
+  count: number;
+  isRead: boolean | null;
+  isRecom: boolean | null;
+  createdAt: string;
+}

@@ -15,7 +15,7 @@ import { Book } from '../types';
 
 interface BookItemProps extends TouchableOpacityProps {
   book: Book;
-  onToggleSave: (book: Book) => void;
+  onToggleSave: (book: Book, type: 'isRead' | 'isRecom') => void;
   isSaved: boolean;
 }
 
@@ -35,7 +35,7 @@ export function BookItem({ book, onToggleSave, isSaved, ...props }: BookItemProp
               <Text style={styles.bookTitle} numberOfLines={2}>{book.volumeInfo.title}</Text>
               <Text style={styles.bookAuthor} numberOfLines={1}>{book.volumeInfo.authors?.join(', ')}</Text>
             </View>
-            <TouchableOpacity onPress={() => onToggleSave(book)} style={styles.heartButton}>
+            <TouchableOpacity onPress={() => onToggleSave(book, 'isRead')} style={styles.heartButton}>
               <AntDesign name="heart" size={20} color={isSaved ? '#ef4444' : '#9ca3af'} />
             </TouchableOpacity>
           </View>

@@ -27,7 +27,20 @@ export function BookSearch() {
   const insets = useSafeAreaInsets();
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
 
-  const { addToLibrary, savedBookIds } = useBooks();
+  const { addToLibrary, removeFromLibrary, readBookIds, recomBookIds } = useBooks();
+  const allSavedIds = [...(readBookIds || []), ...(recomBookIds || [])];
+
+  const handleToggleSave = (book: Book) => {
+    const isSaved = allSavedIds.includes(book.id);
+    if (isSaved) {
+      // 책이 이미 저장되어 있다면, 어떤 리스트에서 제거할지 결정해야 합니다.
+      // 여기서는 기본적으로 'isRead' 리스트에서 제거하도록 처리합니다.
+      const isRead = readBookIds?.includes(book.id);
+      removeFromLibrary(book, isRead ? 'isRead' : 'isRecom');
+    } else {
+      addToLibrary(book, 'isRead');
+    }
+  };
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -95,9 +108,9 @@ export function BookSearch() {
             renderItem={({ item }) => (
               <BookItem
                 book={item}
-                isSaved={savedBookIds.includes(item.id)}
+                isSaved={allSavedIds.includes(item.id)}
                 onPress={() => handleBookPress(item)}
-                onToggleSave={addToLibrary}
+                onToggleSave={() => handleToggleSave(item)}
               />
             )}
           />
@@ -107,8 +120,8 @@ export function BookSearch() {
         visible={!!selectedBook}
         book={selectedBook}
         onClose={handleCloseModal}
-        onAddToLibrary={addToLibrary}
-        isSaved={selectedBook ? savedBookIds.includes(selectedBook.id) : false}
+        onToggleSave={handleToggleSave}
+        isSaved={selectedBook ? allSavedIds.includes(selectedBook.id) : false}
       />
     </>
   );

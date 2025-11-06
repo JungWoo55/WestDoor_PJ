@@ -15,7 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export function Profile() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { userProfile, savedBooks, reloadUserProfile, clearUserProfile } = useBooks();
+  const { userProfile, readBooks, recomBooks, reloadUserProfile, clearUserProfile } = useBooks();
 
   // 화면 포커스 시 사용자 프로필 다시 로드
   useFocusEffect(
@@ -72,7 +72,7 @@ export function Profile() {
   };
 
   const userStats = [
-    { label: "읽은 책", value: `${savedBooks.length}권` },
+    { label: "읽은 책", value: `${(readBooks?.length || 0) + (recomBooks?.length || 0)}권` },
     { label: "목표 독서량", value: `${userProfile.readingGoal || 0}권` },
     { label: "월간 독서량", value: readingAmountMap[userProfile.readingAmount] || '정보 없음' },
   ];

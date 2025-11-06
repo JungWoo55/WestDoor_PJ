@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   ScrollView,
@@ -14,14 +13,23 @@ import { Book } from '../types';
 import { BookDetailModal } from './BookDetailModal';
 import { useBooks } from '../contexts/BookContext';
 import { searchBooks } from '../api/googleBooks';
-import { BookItem } from './BookItem'; // BookItem 임포트
+import { BookItem } from './BookItem';
 
 export function BookRecommendation() {
   const insets = useSafeAreaInsets();
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
-  
-  const { addToLibrary, savedBookIds } = useBooks();
+  const { addToLibrary, removeFromLibrary, readBookIds, recomBookIds } = useBooks();
 
+  const handleToggleSave = (book: Book) => {
+    const allSavedIds = [...(readBookIds || []), ...(recomBookIds || [])];
+    const isSaved = allSavedIds.includes(book.id);
+    if (isSaved) {
+      const isRead = readBookIds?.includes(book.id);
+      removeFromLibrary(book, isRead ? 'isRead' : 'isRecom');
+    } else {
+      addToLibrary(book, 'isRead');
+    }
+  };
   const [selfHelpBooks, setSelfHelpBooks] = useState<Book[]>([]);
   const [fictionBooks, setFictionBooks] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,30 +65,35 @@ export function BookRecommendation() {
     setSelectedBook(null);
   };
 
-  const renderSection = (title: string, data: Book[]) => (
-    <View style={styles.section}>
-      <View style={styles.subSectionHeader}>
-        <Text style={styles.subHeaderTitle}>{title}</Text>
+  const renderSection = (title: string, data: Book[]) => {
+    const allSavedIds = [...(readBookIds || []), ...(recomBookIds || [])];
+    return (
+      <View style={styles.section}>
+        <View style={styles.subSectionHeader}>
+          <Text style={styles.subHeaderTitle}>{title}</Text>
+        </View>
+        <FlatList
+          horizontal
+          data={data}
+          keyExtractor={(item) => item.id}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalScroll}
+          renderItem={({ item }) => (
+            <View style={{ width: 280 }}>
+              <BookItem
+                book={item}
+                isSaved={allSavedIds.includes(item.id)}
+                onPress={() => handleBookPress(item)}
+                onToggleSave={() => handleToggleSave(item)}
+              />
+            </View>
+          )}
+        />
       </View>
-      <FlatList
-        horizontal
-        data={data}
-        keyExtractor={(item) => item.id}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.horizontalScroll}
-        renderItem={({ item }) => (
-          <View style={{ width: 280 }}>{/* 가로 스크롤 아이템의 너비 지정 */}
-            <BookItem
-              book={item}
-              isSaved={savedBookIds.includes(item.id)}
-              onPress={() => handleBookPress(item)}
-              onToggleSave={addToLibrary}
-            />
-          </View>
-        )}
-      />
-    </View>
-  );
+    );
+  }
+
+  const allSavedIds = [...(readBookIds || []), ...(recomBookIds || [])];
 
   return (
     <>
@@ -105,8 +118,8 @@ export function BookRecommendation() {
         visible={!!selectedBook}
         book={selectedBook}
         onClose={handleCloseModal}
-        onAddToLibrary={addToLibrary}
-        isSaved={selectedBook ? savedBookIds.includes(selectedBook.id) : false}
+        onToggleSave={handleToggleSave}
+        isSaved={selectedBook ? allSavedIds.includes(selectedBook.id) : false}
       />
     </>
   );
@@ -114,32 +127,32 @@ export function BookRecommendation() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fafafa' },
-  headerSection: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 10, 
-    marginBottom: 32, 
+  headerSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 32,
     paddingHorizontal: 20,
     paddingTop: 8,
   },
-  mainHeaderTitle: { 
-    fontSize: 28, 
-    fontWeight: '800', 
+  mainHeaderTitle: {
+    fontSize: 28,
+    fontWeight: '800',
     color: '#111827',
     letterSpacing: -0.5,
   },
   section: { marginBottom: 40 },
   subSectionHeader: { marginBottom: 20, paddingHorizontal: 20 },
-  subHeaderTitle: { 
-    fontSize: 20, 
-    fontWeight: '700', 
+  subHeaderTitle: {
+    fontSize: 20,
+    fontWeight: '700',
     color: '#111827',
     letterSpacing: -0.3,
   },
   horizontalScroll: { gap: 16, paddingHorizontal: 20 },
-  errorText: { 
-    textAlign: 'center', 
-    color: '#ef4444', 
+  errorText: {
+    textAlign: 'center',
+    color: '#ef4444',
     marginTop: 60,
     fontSize: 16,
     fontWeight: '500',
