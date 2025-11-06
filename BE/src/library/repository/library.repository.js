@@ -123,3 +123,31 @@ export const updateEntryCount = async (id, isbn, data) => {
     });
     return updatedEntry;
 };
+
+/* 
+* 서재 항목의 정독 횟수 (Count) 업데이트 
+*/
+export const updateEntryCountdown = async (id, isbn, data) => { 
+    const entryToUpdate = await prisma.library.findFirst({
+        where: {
+            id: id,
+            isbn: isbn
+        },
+        select: {id: true, count:true}
+    });
+    if (!entryToUpdate){
+        throw new Error("Library entry not found.");
+    }
+
+    const entryId = entryToUpdate.id;
+    const entryCount = entryToUpdate.count;
+    if ( entryCount < 1 ){ return entryToUpdate};
+    
+    const updatedEntry = await prisma.library.update({
+        where: {id: entryId},
+        data: {
+            count: entryCount - 1
+        }
+    });
+    return updatedEntry;
+};

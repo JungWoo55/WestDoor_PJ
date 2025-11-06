@@ -286,7 +286,7 @@ export const handleRemoveBook = async (req, res, next) => {
          "required": true,
          "schema": {
            "type": "string",
-           "enum": ["isRead", "isRecom"],
+           "enum": ["isRead", "isRecom", "noRead"],
          },
         "example": "isRead"
        }]
@@ -405,13 +405,12 @@ export const handleRemoveBook = async (req, res, next) => {
         if (!isbn){
             throw new InvalidInputValueError("ISBN이 누락되었습니다.", req.params);
         }
-        if (!page || (page !== 'isRead' && page !== 'isRecom')){
+        if (!page || (page !== 'isRead' && page !== 'isRecom' && page !== 'noRead')){
             throw new InvalidInputValueError(
-                "'page' 쿼리 값은 'isRead' 또는 'isRecom'이어야 합니다.", req.query
+                "'page' 쿼리 값은 'isRead' 또는 'isRecom' 또는 'noRead' 이어야 합니다.", req.query
             );
         }
         const result = await removeBookFromUserLibrary(userId, isbn, page);
-
         const responseDto = new RemoveBookResponseDto(result);
         res.status(StatusCodes.OK).success(responseDto);
     } catch(error) {
