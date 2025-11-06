@@ -198,7 +198,7 @@ export const handleGetMyLibrary = async (req, res, next) => {
                             resultType: "fail",
                             error: {
                                 errorCode: "I001",
-                                reason: "'page' 쿼리 값은 'isRead' 또는 'isRecom'이어야 합니다.",
+                                reason: "'page' 쿼리 값은 'isRead' 또는 'isRecom' 또는 'isFinish' 이어야 합니다.",
                                 data: { page: "wrong_query" }
                             }
                         },
@@ -239,9 +239,9 @@ export const handleGetMyLibrary = async (req, res, next) => {
         const {id: userId} = req.user;
         const {page} = queryToGetLibrary(req.query);
 
-        if (!page || (page !== 'isRead' && page !== 'isRecom')){
+        if (!page || (page !== 'isRead' && page !== 'isRecom' && page !== 'isFinish')){
             throw new InvalidInputValueError(
-                "'page' 쿼리 값은 'isRead' 또는 'isRecom'이어야 합니다.", req.query
+                "'page' 쿼리 값은 'isRead' 또는 'isRecom' 또는 'isFinish' 이어야 합니다.", req.query
             );
         }
 

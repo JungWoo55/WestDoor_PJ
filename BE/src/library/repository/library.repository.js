@@ -78,6 +78,25 @@ export const findEntriesByUserId = async (userId, page) => {
     });
 };
 
+/*
+* userIdd와 count로 '서재 항목 객체 리스트' 조회
+*/
+export const findEntriesByUserIdAndCount = async (userId) => {
+    if(!userId){
+        console.error("findEntriesByUserId: userId is undefined!");
+        return [];
+    }
+
+    return prisma.library.findMany({
+        where: {
+            userId: userId,
+            count : {
+                gt : 0
+            }
+        },
+        orderBy: { created_at: "desc" },
+    });
+};
 /* 
 * 서재 항목의 정독 횟수 (Count) 업데이트 
 */
