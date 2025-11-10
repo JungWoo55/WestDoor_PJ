@@ -4,7 +4,7 @@ import { Alert } from 'react-native';
 import { Book, UserProfile, LibraryBook, LibraryBookWithDetails } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getMySurvey } from '@/api/survey';
-import { getLibrary, addBookToLibrary, removeBookFromLibrary, markBookAsRead } from '@/api/library';
+import { getLibrary, addBookToLibrary, removeBookFromLibrary, markBookAsRead, decrementBookReadCount } from '@/api/library';
 import { getBookByISBN } from '@/api/googleBooks';
 
 // 컨텍스트 타입 정의
@@ -19,6 +19,7 @@ interface BookContextType {
   addToLibrary: (book: Book, type: 'isRead' | 'isRecom') => Promise<void>;
   removeFromLibrary: (book: Book, type: 'isRead' | 'isRecom') => Promise<void>;
   markAsRead: (book: Book) => Promise<void>;
+  decrementReadCount: (book: Book) => Promise<void>;
   userProfile: UserProfile | null;
   updateUserProfile: (profile: Partial<UserProfile>) => void;
   reloadUserProfile: () => Promise<void>;
@@ -207,6 +208,21 @@ export const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const decrementReadCount = async (book: Book) => {
+    const isbn = getISBN(book);
+    if (!isbn) {
+      Alert.alert('오류', '이 책은 유효한 ISBN 정보가 없어 실행할 수 없습니다.');
+      return;
+    }
+    try {
+      await decrementBookReadCount(isbn);
+      Alert.alert('읽은 기록을 하나 제거했습니다.');
+      await loadLibraryData(); // 목록 새로고침
+    } catch (error) {
+      Alert.alert('오류', '기록을 제거하는 데 실패했습니다.');
+    }
+  };
+
   const updateUserProfile = async (profileUpdates: Partial<UserProfile>) => {
     setUserProfile(prevProfile => {
       const newUserProfile = { ...(prevProfile || {}), ...profileUpdates } as UserProfile;
@@ -262,6 +278,7 @@ export const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       addToLibrary, 
       removeFromLibrary, 
       markAsRead,
+      decrementReadCount,
       userProfile, 
       updateUserProfile,
       reloadUserProfile: loadUserProfile,

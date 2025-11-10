@@ -5,7 +5,7 @@ import api from './index';
  * 내 서재 목록을 가져옵니다.
  * @param page 'isRead' 또는 'isRecom'
  */
-export const getLibrary = async (page: 'isRead' | 'isRecom') => {
+export const getLibrary = async (page: 'isRead' | 'isRecom' | 'isFinish') => {
   try {
     const response = await api.get(`/library?page=${page}`);
     return response.data;
@@ -58,4 +58,18 @@ export const markBookAsRead = async (isbn: string) => {
       console.error('Error marking book as read:', error);
       throw error;
     }
+};
+
+/**
+ * 책의 완독 횟수를 1 감소시킵니다.
+ * @param isbn ISBN
+ */
+export const decrementBookReadCount = async (isbn: string) => {
+  try {
+    const response = await api.delete(`/library/${isbn}/noRead`);
+    return response.data;
+  } catch (error) {
+    console.error('Error decrementing book read count:', error);
+    throw error;
+  }
 };
