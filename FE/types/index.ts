@@ -17,6 +17,22 @@ export interface Book {
   };
 }
 
+export interface LibraryBook {
+  id: number;
+  isbn: string;
+  count: number;
+  isRead: boolean | null;
+  isRecom: boolean | null;
+  createdAt: string;
+}
+
+// Book 인터페이스를 확장하여 LibraryBook의 속성을 포함하는 새로운 인터페이스 정의
+export interface LibraryBookWithDetails extends Book {
+  count: number;
+  isRead: boolean | null;
+  isRecom: boolean | null;
+}
+
 export interface UserProfile {
   id: number;
   email: string;
@@ -27,13 +43,4 @@ export interface UserProfile {
   readingGoal: number;
   readingAmount: number;
   readingStyle: string;
-}
-
-export interface LibraryBook {
-  id: number;
-  isbn: string;
-  count: number;
-  isRead: boolean | null;
-  isRecom: boolean | null;
-  createdAt: string;
 }

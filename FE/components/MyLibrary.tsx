@@ -1,304 +1,191 @@
 
-
-
 import React, { useState } from 'react';
-
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
-
 import { FontAwesome } from '@expo/vector-icons';
-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-import { Book } from '../types';
-
+import { Book, LibraryBookWithDetails } from '../types'; // Book 타입과 LibraryBookWithDetails 타입 모두 필요
 import { BookDetailModal } from './BookDetailModal';
-
 import { useBooks } from '../contexts/BookContext';
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
-
 import { BookItem } from './BookItem';
 
-
-
 export function MyLibrary() {
-
   const insets = useSafeAreaInsets();
-
-  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
-
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null); // BookDetailModal은 Book 타입을 기대하므로 유지
   const { 
-
-    readBooks, 
-
-    recomBooks, 
-
+    countedBooks, // count >= 1 인 책 (읽은 책)
+    savedBooks, // isRead === true 인 책 (저장한 책)
+    recommendedBooks, // isRecom === true 인 책 (추천받은 책)
     addToLibrary, 
-
     removeFromLibrary, 
-
-    readBookIds, 
-
-    recomBookIds,
-
+    markAsRead,
     isLoading 
-
   } = useBooks();
 
-
+  // BookContext에서 직접 ID를 가져오는 대신, 여기서 파생
+  const savedBookIds = savedBooks.map(book => book.id);
+  const recommendedBookIds = recommendedBooks.map(book => book.id);
 
   const handleBookPress = (book: Book) => {
-
     setSelectedBook(book);
-
   };
-
-
 
   const handleCloseModal = () => {
-
     setSelectedBook(null);
-
   };
 
+  const getISBN = (book: Book): string | null => {
+    if (!book || !book.volumeInfo) {
+      return null;
+    }
+    const industryIdentifiers = book.volumeInfo.industryIdentifiers;
+    if (industryIdentifiers) {
+      const isbn13 = industryIdentifiers.find(id => id.type === 'ISBN_13');
+      if (isbn13) return isbn13.identifier;
+      const isbn10 = industryIdentifiers.find(id => id.type === 'ISBN_10');
+      if (isbn10) return isbn10.identifier;
+    }
+    return book.id; // Fallback to book.id if no ISBN is found
+  };
 
+  const handleToggleSave = async (book: Book, type: 'isRead' | 'isRecom') => {
+    const isbn = getISBN(book);
+    if (!isbn) {
+      console.error('ISBN not found for book:', book);
+      return;
+    }
 
-  const handleToggleSave = (book: Book, type: 'isRead' | 'isRecom') => {
-
-    const isSaved = type === 'isRead' ? readBookIds.includes(book.id) : recomBookIds.includes(book.id);
-
-    // Google Books API의 ID에서 ISBN을 추출해야 합니다. 
-
-    // volumeInfo.industryIdentifiers를 사용하거나, book.id가 ISBN이라고 가정합니다.
-
-    const isbn = book.id; 
-
-
+    const isSaved = type === 'isRead' 
+      ? savedBookIds.includes(book.id) 
+      : recommendedBookIds.includes(book.id);
 
     if (isSaved) {
-
-      removeFromLibrary(book, type);
-
+      await removeFromLibrary(book, type);
     } else {
-
-      addToLibrary(book, type);
-
+      await addToLibrary(book, type);
     }
-
   };
 
-
-
-  const renderBookList = (books: Book[], type: 'isRead' | 'isRecom', emptyMessage: string) => {
-
+  const renderBookList = (
+    books: LibraryBookWithDetails[], 
+    type: 'isRead' | 'isRecom', 
+    emptyMessage: string,
+    options?: {
+      onDelete?: (book: Book) => void;
+      onMarkAsRead?: (book: Book) => void;
+    }
+  ) => {
     if (isLoading) {
-
       return <ActivityIndicator size="large" color="#16a34a" style={{ marginTop: 50 }} />;
-
     }
 
-
-
     return (
-
       <FlatList
-
         data={books}
-
         keyExtractor={(item) => item.id}
-
         contentContainerStyle={styles.listContentContainer}
-
         renderItem={({ item }) => {
-
           const isSaved = type === 'isRead' 
-
-            ? readBookIds.includes(item.id) 
-
-            : recomBookIds.includes(item.id);
-
+            ? savedBookIds.includes(item.id) 
+            : recommendedBookIds.includes(item.id);
           return (
-
             <BookItem
-
               book={item}
-
               isSaved={isSaved}
-
               onPress={() => handleBookPress(item)}
-
               onToggleSave={() => handleToggleSave(item, type)}
-
+              onDelete={options?.onDelete ? () => options.onDelete?.(item) : undefined}
+              onMarkAsRead={options?.onMarkAsRead ? () => options.onMarkAsRead?.(item) : undefined}
             />
-
           );
-
         }}
-
         ListEmptyComponent={() => (
-
           <View style={styles.emptyContainer}>
-
             <FontAwesome name="bookmark-o" size={48} color="#9ca3af" />
-
             <Text style={styles.emptyText}>{emptyMessage}</Text>
-
           </View>
-
         )}
-
       />
-
     );
-
   }
 
-
-
   return (
-
     <>
-
       <View style={[styles.container, { paddingTop: insets.top }]}> 
-
         <View style={styles.header}>
-
           <FontAwesome name="bookmark" size={20} color="#16a34a" />
-
           <Text style={styles.headerTitle}>내 서재</Text>
-
         </View>
-
         
-
         <Tabs defaultValue="reading" style={styles.tabsContainer}>
-
           <TabsList>
-
-            <TabsTrigger value="reading">{`읽은 책 (${readBooks.length})`}</TabsTrigger>
-
-            <TabsTrigger value="recommended">{`추천받은 책 (${recomBooks.length})`}</TabsTrigger>
-
+            <TabsTrigger value="reading">{`읽은 책 (${countedBooks.length})`}</TabsTrigger>
+            <TabsTrigger value="saved">{`저장한 책 (${savedBooks.length})`}</TabsTrigger>
+            <TabsTrigger value="recommended">{`추천받은 책 (${recommendedBooks.length})`}</TabsTrigger>
           </TabsList>
-
           <TabsContent value="reading">
-
-            {renderBookList(readBooks, 'isRead', "읽은 책이 없습니다.")}
-
+            {renderBookList(countedBooks, 'isRead', "읽은 책이 없습니다.")}
           </TabsContent>
-
+          <TabsContent value="saved">
+            {renderBookList(savedBooks, 'isRead', "저장한 책이 없습니다.", {
+              onDelete: (book) => removeFromLibrary(book, 'isRead'),
+              onMarkAsRead: (book) => markAsRead(book),
+            })}
+          </TabsContent>
           <TabsContent value="recommended">
-
-            {renderBookList(recomBooks, 'isRecom', "추천받은 책이 없습니다.")}
-
+            {renderBookList(recommendedBooks, 'isRecom', "추천받은 책이 없습니다.")}
           </TabsContent>
-
         </Tabs>
 
-
-
       </View>
-
       <BookDetailModal
-
         visible={!!selectedBook}
-
         book={selectedBook}
-
         onClose={handleCloseModal}
-
         onToggleSave={(book, type) => handleToggleSave(book, type as 'isRead' | 'isRecom')}
-
-        isSaved={selectedBook ? readBookIds.includes(selectedBook.id) || recomBookIds.includes(selectedBook.id) : false}
-
+        isSaved={selectedBook ? savedBookIds.includes(selectedBook.id) || recommendedBookIds.includes(selectedBook.id) : false}
       />
-
     </>
-
   );
-
 }
 
-
-
 const styles = StyleSheet.create({
-
   container: {
-
     flex: 1,
-
     backgroundColor: '#fafafa',
-
   },
-
   header: {
-
     flexDirection: 'row',
-
     alignItems: 'center',
-
     gap: 10,
-
     paddingTop: 20,
-
     paddingBottom: 20,
-
     paddingHorizontal: 20,
-
   },
-
   headerTitle: {
-
     fontSize: 28,
-
     fontWeight: '800',
-
     color: '#111827',
-
     letterSpacing: -0.5,
-
   },
-
   tabsContainer: {
-
     flex: 1,
-
     paddingHorizontal: 20,
-
   },
-
   listContentContainer: {
-
     paddingTop: 20,
-
     paddingBottom: 32,
-
     gap: 16,
-
   },
-
   emptyContainer: {
-
     paddingVertical: 80,
-
     alignItems: 'center',
-
     gap: 20,
-
   },
-
   emptyText: {
-
     color: '#6b7280',
-
     fontSize: 17,
-
     fontWeight: '500',
-
     textAlign: 'center',
-
   },
-
 });
-
-
