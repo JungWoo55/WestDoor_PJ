@@ -1,0 +1,24 @@
+{
+  "cli": {
+    "requireCommit": true,
+    "version": ">= 16.27.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "extends": "production"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "node": "22.18.0",
+      "autoIncrement": true,
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
