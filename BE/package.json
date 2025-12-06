@@ -27,6 +27,7 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "@gradio/client": "^2.0.0",
     "prisma": "^6.17.1"
   }
 }

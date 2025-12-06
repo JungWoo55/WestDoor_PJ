@@ -2,6 +2,7 @@ import express from "express";
 import authRouter from "../auth/router/auth.router.js";
 import libraryRouter from "../library/router/library.router.js";
 import surveyRouter from "../survey/router/survey.router.js";
+import chatRouter from "../chat/router/chat.router.js";
 
 const router = express.Router({ mergeParams: true });
 router.get("/", (req, res) => {
@@ -18,4 +19,5 @@ router.get("/", (req, res) => {
 router.use("/auth", authRouter);
 router.use("/library", libraryRouter);
 router.use("/survey", surveyRouter);
+router.use("/chat", chatRouter);
 export default router;
