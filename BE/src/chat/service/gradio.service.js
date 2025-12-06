@@ -11,7 +11,7 @@ let gradioClient = null;
  */
 const initGradioClient = async () => {
   if (!gradioClient) {
-    const gradioUrl = process.env.GRADIO_URL ||"https://0b15b9752d21735785.gradio.live/";
+    const gradioUrl = process.env.GRADIO_URL ||"https://7c2ea3029f9c8a2d83.gradio.live/";
     gradioClient = await Client.connect(gradioUrl);
   }
   return gradioClient;
