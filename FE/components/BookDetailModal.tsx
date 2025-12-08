@@ -20,7 +20,7 @@ interface BookDetailModalProps {
   book: Book | null;
   visible: boolean;
   onClose: () => void;
-  onAddToLibrary: (book: Book) => void;
+  onToggleSave: (book: Book, type: 'isRead' | 'isRecom') => void;
   isSaved: boolean;
 }
 
@@ -33,7 +33,7 @@ const DetailRow = ({ label, value }: { label: string; value: string | number | u
   </View>
 );
 
-export function BookDetailModal({ book, visible, onClose, onAddToLibrary, isSaved }: BookDetailModalProps) {
+export function BookDetailModal({ book, visible, onClose, onToggleSave, isSaved }: BookDetailModalProps) {
   if (!book) {
     return null;
   }
@@ -96,7 +96,7 @@ export function BookDetailModal({ book, visible, onClose, onAddToLibrary, isSave
           <View style={styles.footer}>
             <Button 
               style={styles.actionButton} 
-              onPress={() => onAddToLibrary(book)}
+              onPress={() => onToggleSave(book, 'isRead')}
             >
               <AntDesign name="heart" size={18} color={isSaved ? '#ef4444' : 'white'} />
               <Text style={styles.actionButtonText}>

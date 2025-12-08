@@ -10,16 +10,30 @@ import {
 } from 'react-native';
 import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
+import { Button } from './ui/Button';
 import { AntDesign } from '@expo/vector-icons';
-import { Book } from '../types';
+import { Book, LibraryBookWithDetails } from '../types';
 
 interface BookItemProps extends TouchableOpacityProps {
-  book: Book;
-  onToggleSave: (book: Book) => void;
-  isSaved: boolean;
+  book: LibraryBookWithDetails;
+  onToggleSave?: (book: Book, type: 'isRead' | 'isRecom') => void;
+  isSaved?: boolean;
+  onDelete?: () => void;
+  onMarkAsRead?: () => void;
+  onIncrementReadCount?: () => void;
+  onDecrementReadCount?: () => void;
 }
 
-export function BookItem({ book, onToggleSave, isSaved, ...props }: BookItemProps) {
+export function BookItem({ 
+  book, 
+  onToggleSave, 
+  isSaved, 
+  onDelete, 
+  onMarkAsRead, 
+  onIncrementReadCount,
+  onDecrementReadCount,
+  ...props 
+}: BookItemProps) {
   const coverImage = book.volumeInfo.imageLinks?.thumbnail || 'https://via.placeholder.com/80x112.png?text=No+Image';
 
   return (
@@ -35,23 +49,56 @@ export function BookItem({ book, onToggleSave, isSaved, ...props }: BookItemProp
               <Text style={styles.bookTitle} numberOfLines={2}>{book.volumeInfo.title}</Text>
               <Text style={styles.bookAuthor} numberOfLines={1}>{book.volumeInfo.authors?.join(', ')}</Text>
             </View>
-            <TouchableOpacity onPress={() => onToggleSave(book)} style={styles.heartButton}>
-              <AntDesign name="heart" size={20} color={isSaved ? '#ef4444' : '#9ca3af'} />
-            </TouchableOpacity>
+            {onToggleSave && (
+              <TouchableOpacity onPress={() => onToggleSave(book, 'isRead')} style={styles.heartButton}>
+                <AntDesign name="heart" size={20} color={isSaved ? '#ef4444' : '#9ca3af'} />
+              </TouchableOpacity>
+            )}
           </View>
           
           <View style={styles.bookFooter}>
-            {book.volumeInfo.categories?.[0] && 
-              <Badge variant="secondary">
-                {book.volumeInfo.categories[0]}
-              </Badge>
-            }
-            {book.volumeInfo.averageRating &&
+            <View style={styles.bookMeta}>
+              {book.volumeInfo.categories?.[0] && 
+                <Badge variant="secondary">
+                  {book.volumeInfo.categories[0]}
+                </Badge>
+              }
               <View style={styles.ratingContainer}>
-                <AntDesign name="star" size={14} color="#facc15" />
-                <Text style={styles.ratingText}>{book.volumeInfo.averageRating}</Text>
+                {book.volumeInfo.averageRating && (
+                  <>
+                    <AntDesign name="star" size={14} color="#facc15" />
+                    <Text style={styles.ratingText}>{book.volumeInfo.averageRating}</Text>
+                  </>
+                )}
+                {book.count > 0 && (
+                  <Text style={styles.readCountText}>({book.count}회독)</Text>
+                )}
               </View>
-            }
+            </View>
+            
+            {/* '저장한 책' 탭을 위한 버튼들 */}
+            {onDelete && onMarkAsRead && (
+              <View style={styles.buttonContainer}>
+                <Button variant="outline" size="sm" onPress={onMarkAsRead}>
+                  읽음
+                </Button>
+                <Button variant="destructive" size="sm" onPress={onDelete}>
+                  삭제
+                </Button>
+              </View>
+            )}
+
+            {/* '읽은 책' 탭을 위한 버튼들 */}
+            {onIncrementReadCount && onDecrementReadCount && (
+              <View style={styles.buttonContainer}>
+                <Button variant="outline" size="sm" onPress={onIncrementReadCount}>
+                  회독 추가
+                </Button>
+                <Button variant="destructive" size="sm" onPress={onDecrementReadCount}>
+                  삭제
+                </Button>
+              </View>
+            )}
           </View>
         </View>
       </Card>
@@ -98,10 +145,15 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   bookFooter: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  bookMeta: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 8,
+    width: '100%',
   },
   ratingContainer: {
     flexDirection: 'row',
@@ -112,5 +164,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: '#374151',
+  },
+  readCountText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#16a34a',
+    marginLeft: 8,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    width: '100%',
+    justifyContent: 'flex-end',
   },
 });

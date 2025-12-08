@@ -12,7 +12,7 @@ import { getMySurvey } from '../api/survey';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { reloadUserProfile } = useBooks();
+  const { reloadUserProfile, login } = useBooks();
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -45,6 +45,7 @@ export default function LoginScreen() {
             await AsyncStorage.setItem("user", JSON.stringify(user));
             await AsyncStorage.setItem("user", JSON.stringify(completeProfile));
             await reloadUserProfile();
+            login();
 
           if (completeProfile == null) {
             await AsyncStorage.setItem("user", JSON.stringify(user));
@@ -55,6 +56,7 @@ export default function LoginScreen() {
         if (user?.isCompleted === false) {
             await AsyncStorage.setItem("user", JSON.stringify(user));
             await reloadUserProfile();
+            login();
             router.replace("/survey");
         } 
         else{

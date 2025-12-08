@@ -78,6 +78,25 @@ export const findEntriesByUserId = async (userId, page) => {
     });
 };
 
+/*
+* userIdd와 count로 '서재 항목 객체 리스트' 조회
+*/
+export const findEntriesByUserIdAndCount = async (userId) => {
+    if(!userId){
+        console.error("findEntriesByUserId: userId is undefined!");
+        return [];
+    }
+
+    return prisma.library.findMany({
+        where: {
+            userId: userId,
+            count : {
+                gt : 0
+            }
+        },
+        orderBy: { created_at: "desc" },
+    });
+};
 /* 
 * 서재 항목의 정독 횟수 (Count) 업데이트 
 */
@@ -100,6 +119,34 @@ export const updateEntryCount = async (id, isbn, data) => {
         where: {id: entryId},
         data: {
             count: entryCount + 1
+        }
+    });
+    return updatedEntry;
+};
+
+/* 
+* 서재 항목의 정독 횟수 (Count) 업데이트 
+*/
+export const updateEntryCountdown = async (id, isbn, data) => { 
+    const entryToUpdate = await prisma.library.findFirst({
+        where: {
+            id: id,
+            isbn: isbn
+        },
+        select: {id: true, count:true}
+    });
+    if (!entryToUpdate){
+        throw new Error("Library entry not found.");
+    }
+
+    const entryId = entryToUpdate.id;
+    const entryCount = entryToUpdate.count;
+    if ( entryCount < 1 ){ return entryToUpdate};
+    
+    const updatedEntry = await prisma.library.update({
+        where: {id: entryId},
+        data: {
+            count: entryCount - 1
         }
     });
     return updatedEntry;

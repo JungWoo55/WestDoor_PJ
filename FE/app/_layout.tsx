@@ -1,8 +1,18 @@
 
 import { Stack } from "expo-router";
 import { BookProvider } from "../contexts/BookContext";
+import { useEffect } from 'react';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function RootLayout() {
+  useEffect(() => {
+    const clearStorage = async () => {
+      await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('accessToken');
+    };
+    clearStorage();
+  }, []);
+
   return (
     <BookProvider>
       <Stack>

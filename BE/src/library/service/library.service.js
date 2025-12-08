@@ -1,4 +1,4 @@
-import {findEntryByIsbn, updateEntryFlags, createEntry,deleteEntryById, findEntriesByUserId, updateEntryCount}  from "../repository/library.repository.js";
+import {findEntryByIsbn, updateEntryFlags, createEntry,deleteEntryById, findEntriesByUserId,findEntriesByUserIdAndCount, updateEntryCount, updateEntryCountdown}  from "../repository/library.repository.js";
 
 /**
  * @description 서재에 도서 추가
@@ -48,14 +48,20 @@ export const removeBookFromUserLibrary = async (userId, isbn, page) => {
     }
     // 2. page에 따라 해당 플래그를 false로 업데이트
     const dataToUpdate = {};
+    let updatedEntry = null;
     if (page === 'isRead') {
         dataToUpdate.isRead = false;
     } else if (page === 'isRecom') {
         dataToUpdate.isRecom = false;
+    } else if (page === 'noRead'){
+        updatedEntry = await updateEntryCountdown(existingEntry.id,existingEntry.isbn);
     }
-    const updatedEntry = await updateEntryFlags(existingEntry.id, existingEntry.isbn, dataToUpdate);
+    if (!updatedEntry){
+        updatedEntry = await updateEntryFlags(existingEntry.id, existingEntry.isbn, dataToUpdate);
+    }
+
     // 3. 업데이트 후, 두 플래그 모두 false인지 확인
-    if (updatedEntry.isRead === false && updatedEntry.isRecom === false) {
+    if (updatedEntry.isRead === false && updatedEntry.isRecom === false && updatedEntry.count < 1) {
         // 모두 false이면 항목 삭제
         await deleteEntryById(updatedEntry.id);
         return { status: 'deleted' };
@@ -71,7 +77,13 @@ export const removeBookFromUserLibrary = async (userId, isbn, page) => {
  * 책 객체 배열 반환
  */
 export const getLibraryList = async (userId, page) => {
+    if (page === "isFinish") {
+        const entries = await findEntriesByUserIdAndCount(userId);
+        return entries;
+    }
+    
     const entries = await findEntriesByUserId(userId, page);
+    
     return entries;
 };
 

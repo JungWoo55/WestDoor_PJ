@@ -1,57 +1,111 @@
-
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native'; // FlatList, ScrollView 제거
+import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Book } from '../types';
+import { Book, LibraryBookWithDetails } from '../types'; // Book 타입과 LibraryBookWithDetails 타입 모두 필요
 import { BookDetailModal } from './BookDetailModal';
 import { useBooks } from '../contexts/BookContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import { BookItem } from './BookItem';
-
 export function MyLibrary() {
   const insets = useSafeAreaInsets();
-  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
-  const { savedBooks, addToLibrary, savedBookIds } = useBooks();
-
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null); // BookDetailModal은 Book 타입을 기대하므로 유지
+  const { 
+    countedBooks, // count >= 1 인 책 (읽은 책)
+    savedBooks, // isRead === true 인 책 (저장한 책)
+    recommendedBooks, // isRecom === true 인 책 (추천받은 책)
+    addToLibrary, 
+    removeFromLibrary, 
+    markAsRead,
+    decrementReadCount,
+    isLoading 
+  } = useBooks();
+  // BookContext에서 직접 ID를 가져오는 대신, 여기서 파생
+  const savedBookIds = savedBooks.map(book => book.id);
+  const recommendedBookIds = recommendedBooks.map(book => book.id);
   const handleBookPress = (book: Book) => {
     setSelectedBook(book);
   };
-
   const handleCloseModal = () => {
     setSelectedBook(null);
   };
-
-  // 현재는 모든 책을 '읽을 책'으로 간주합니다.
-  const readingList = savedBooks;
-  // 추천받은 책 목록은 비워둡니다. 향후 로직 구현이 필요합니다.
-  const recommendedList: Book[] = [];
-
-  const renderBookList = (books: Book[], emptyMessage: string) => (
-    <FlatList
-      data={books}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={styles.listContentContainer}
-      renderItem={({ item }) => (
-        <BookItem
-          book={item}
-          isSaved={true} // 내 서재에 있는 책이므로 항상 true
-          onPress={() => handleBookPress(item)}
-          onToggleSave={addToLibrary} // 컨텍스트의 토글 함수 사용
-        />
-      )}
-      ListEmptyComponent={() => (
-        <View style={styles.emptyContainer}>
-          <FontAwesome name="bookmark-o" size={48} color="#9ca3af" />
-          <Text style={styles.emptyText}>{emptyMessage}</Text>
-        </View>
-      )}
-    />
-  );
-
+  const getISBN = (book: Book): string | null => {
+    if (!book || !book.volumeInfo) {
+      return null;
+    }
+    const industryIdentifiers = book.volumeInfo.industryIdentifiers;
+    if (industryIdentifiers) {
+      const isbn13 = industryIdentifiers.find(id => id.type === 'ISBN_13');
+      if (isbn13) return isbn13.identifier;
+      const isbn10 = industryIdentifiers.find(id => id.type === 'ISBN_10');
+      if (isbn10) return isbn10.identifier;
+    }
+    return null;
+  };
+  const handleToggleSave = async (book: Book, type: 'isRead' | 'isRecom') => {
+    const isbn = getISBN(book);
+    if (!isbn) {
+      console.error('ISBN not found for book:', book);
+      return;
+    }
+    const isSaved = type === 'isRead' 
+      ? savedBookIds.includes(book.id) 
+      : recommendedBookIds.includes(book.id);
+    if (isSaved) {
+      await removeFromLibrary(book, type);
+    } else {
+      await addToLibrary(book, type);
+    }
+  };
+  const renderBookList = (
+    books: LibraryBookWithDetails[], 
+    type: 'isRead' | 'isRecom', 
+    emptyMessage: string,
+    options?: {
+      onDelete?: (book: Book) => void;
+      onMarkAsRead?: (book: Book) => void;
+      onIncrementReadCount?: (book: Book) => void;
+      onDecrementReadCount?: (book: Book) => void;
+      showToggleSave?: boolean;
+    }
+  ) => {
+    if (isLoading) {
+      return <ActivityIndicator size="large" color="#16a34a" style={{ marginTop: 50 }} />;
+    }
+    return (
+      <FlatList
+        data={books}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContentContainer}
+        renderItem={({ item }) => {
+          const isSaved = type === 'isRead' 
+            ? savedBookIds.includes(item.id) 
+            : recommendedBookIds.includes(item.id);
+          return (
+            <BookItem
+              book={item}
+              isSaved={isSaved}
+              onPress={() => handleBookPress(item)}
+              onToggleSave={options?.showToggleSave ? () => handleToggleSave(item, type) : undefined}
+              onDelete={options?.onDelete ? () => options.onDelete?.(item) : undefined}
+              onMarkAsRead={options?.onMarkAsRead ? () => options.onMarkAsRead?.(item) : undefined}
+              onIncrementReadCount={options?.onIncrementReadCount ? () => options.onIncrementReadCount?.(item) : undefined}
+              onDecrementReadCount={options?.onDecrementReadCount ? () => options.onDecrementReadCount?.(item) : undefined}
+            />
+          );
+        }}
+        ListEmptyComponent={() => (
+          <View style={styles.emptyContainer}>
+            <FontAwesome name="bookmark-o" size={48} color="#9ca3af" />
+            <Text style={styles.emptyText}>{emptyMessage}</Text>
+          </View>
+        )}
+      />
+    );
+  }
   return (
     <>
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.container, { paddingTop: insets.top }]}> 
         <View style={styles.header}>
           <FontAwesome name="bookmark" size={20} color="#16a34a" />
           <Text style={styles.headerTitle}>내 서재</Text>
@@ -59,29 +113,41 @@ export function MyLibrary() {
         
         <Tabs defaultValue="reading" style={styles.tabsContainer}>
           <TabsList>
-            <TabsTrigger value="reading">{`읽을 책 (${readingList.length})`}</TabsTrigger>
-            <TabsTrigger value="recommended">{`추천받은 책 (${recommendedList.length})`}</TabsTrigger>
+            <TabsTrigger value="reading">{`읽은 책 (${countedBooks.length})`}</TabsTrigger>
+            <TabsTrigger value="saved">{`저장한 책 (${savedBooks.length})`}</TabsTrigger>
+            <TabsTrigger value="recommended">{`추천받은 책 (${recommendedBooks.length})`}</TabsTrigger>
           </TabsList>
           <TabsContent value="reading">
-            {renderBookList(readingList, "서재에 저장된 책이 없습니다.")}
+            {renderBookList(countedBooks, 'isRead', "읽은 책이 없습니다.", {
+              onIncrementReadCount: (book) => markAsRead(book),
+              onDecrementReadCount: (book) => decrementReadCount(book),
+              showToggleSave: false,
+            })}
+          </TabsContent>
+          <TabsContent value="saved">
+            {renderBookList(savedBooks, 'isRead', "저장한 책이 없습니다.", {
+              onDelete: (book) => removeFromLibrary(book, 'isRead'),
+              onMarkAsRead: (book) => markAsRead(book),
+              showToggleSave: true,
+            })}
           </TabsContent>
           <TabsContent value="recommended">
-            {renderBookList(recommendedList, "추천받아 저장한 책이 없습니다.")}
+            {renderBookList(recommendedBooks, 'isRecom', "추천받은 책이 없습니다.", {
+              showToggleSave: true,
+            })}
           </TabsContent>
         </Tabs>
-
       </View>
       <BookDetailModal
         visible={!!selectedBook}
         book={selectedBook}
         onClose={handleCloseModal}
-        onAddToLibrary={addToLibrary}
-        isSaved={selectedBook ? savedBookIds.includes(selectedBook.id) : false}
+        onToggleSave={(book, type) => handleToggleSave(book, type as 'isRead' | 'isRecom')}
+        isSaved={selectedBook ? savedBookIds.includes(selectedBook.id) || recommendedBookIds.includes(selectedBook.id) : false}
       />
     </>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
