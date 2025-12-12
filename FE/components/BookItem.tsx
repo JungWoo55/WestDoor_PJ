@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   View,
@@ -13,6 +12,7 @@ import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
 import { AntDesign } from '@expo/vector-icons';
 import { Book, LibraryBookWithDetails } from '../types';
+import Toast from 'react-native-toast-message'; // Correct import location
 
 interface BookItemProps extends TouchableOpacityProps {
   book: LibraryBookWithDetails;
@@ -34,7 +34,22 @@ export function BookItem({
   onDecrementReadCount,
   ...props 
 }: BookItemProps) {
-  const coverImage = book.volumeInfo.imageLinks?.thumbnail || 'https://via.placeholder.com/80x112.png?text=No+Image';
+  const imageUrl = book.volumeInfo.imageLinks?.thumbnail;
+  const coverImage = imageUrl
+    ? imageUrl.replace(/^http:/, 'https:')
+    : 'https://via.placeholder.com/80x112.png?text=No+Image';
+
+  const handleToggle = () => {
+    if (onToggleSave) {
+      onToggleSave(book, 'isRead');
+      Toast.show({
+        type: isSaved ? 'info' : 'success',
+        text1: isSaved ? '서재에서 제거했어요' : '서재에 추가했어요',
+        text2: book.volumeInfo.title,
+        position: 'bottom',
+      });
+    }
+  };
 
   return (
     <TouchableOpacity {...props}>
@@ -50,7 +65,7 @@ export function BookItem({
               <Text style={styles.bookAuthor} numberOfLines={1}>{book.volumeInfo.authors?.join(', ')}</Text>
             </View>
             {onToggleSave && (
-              <TouchableOpacity onPress={() => onToggleSave(book, 'isRead')} style={styles.heartButton}>
+              <TouchableOpacity onPress={handleToggle} style={styles.heartButton}>
                 <AntDesign name="heart" size={20} color={isSaved ? '#ef4444' : '#9ca3af'} />
               </TouchableOpacity>
             )}

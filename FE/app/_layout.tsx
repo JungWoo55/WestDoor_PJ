@@ -1,26 +1,21 @@
 
 import { Stack } from "expo-router";
 import { BookProvider } from "../contexts/BookContext";
-import { useEffect } from 'react';
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import Toast from 'react-native-toast-message';
+import { View } from 'react-native';
 
 export default function RootLayout() {
-  useEffect(() => {
-    const clearStorage = async () => {
-      await AsyncStorage.removeItem('user');
-      await AsyncStorage.removeItem('accessToken');
-    };
-    clearStorage();
-  }, []);
-
   return (
-    <BookProvider>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="signup" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
-    </BookProvider>
+    <View style={{ flex: 1 }}>
+      <BookProvider>
+        <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="login" options={{ headerShown: false }} />
+          <Stack.Screen name="signup" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack>
+      </BookProvider>
+      <Toast />
+    </View>
   );
 }

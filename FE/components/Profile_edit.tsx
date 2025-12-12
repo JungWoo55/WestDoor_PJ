@@ -16,8 +16,8 @@ import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useBooks } from '../contexts/BookContext';
-import { getMySurvey, updateSurvey } from '../api/survey';
-import { refresh, updateProfile } from '../api/auth';
+import { updateSurvey } from '../api/survey';
+import { updateProfile } from '../api/auth';
 import { useRouter } from 'expo-router';
 
 const CATEGORIES = [
@@ -37,7 +37,7 @@ const getReadingAmountIndex = (amount: number | undefined) => {
 export function Profile_edit() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { userProfile, reloadUserProfile, updateUserProfile } = useBooks();
+  const { userProfile, reloadUserProfile, updateUserProfile } = useBooks(); // eslint-disable-line @typescript-eslint/no-unused-vars
 
   const [nickname, setNickname] = useState(userProfile?.nickname || '');
   const [selectedGenres, setSelectedGenres] = useState(userProfile?.favoriteGenres || []);

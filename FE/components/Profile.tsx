@@ -6,61 +6,49 @@ import { Button } from './ui/Button';
 import { Avatar } from './ui/Avatar';
 import { Badge } from './ui/Badge';
 import { Separator } from './ui/Separator';
-import { Feather, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
+import { Feather, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBooks } from '../contexts/BookContext';
-import { logout} from '../api/auth';
+import { logout } from '../api/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ProgressBar } from './ui/ProgressBar';
 
 export function Profile() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { userProfile, countedBooks, reloadUserProfile, clearUserProfile } = useBooks();
 
-  // 화면 포커스 시 사용자 프로필 다시 로드
   useFocusEffect(
     React.useCallback(() => {
       reloadUserProfile();
-      console.log('profile')
     }, [reloadUserProfile])
   );
 
   const handleLogout = async () => {
-    Alert.alert(
-      '로그아웃',
-      '정말 로그아웃하시겠습니까?',
-      [
-        {
-          text: '취소',
-          style: 'cancel',
+    Alert.alert('로그아웃', '정말 로그아웃하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '로그아웃',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await logout();
+          } catch (error) {
+            console.error('Logout API error:', error);
+          } finally {
+            await AsyncStorage.removeItem('user');
+            clearUserProfile();
+            router.replace('/login');
+          }
         },
-        {
-          text: '로그아웃',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await logout();
-              await AsyncStorage.removeItem('user');
-              clearUserProfile();
-              router.replace('/');
-            } catch (error) {
-              console.error('Logout error:', error);
-              // 에러가 발생해도 로컬에서 로그아웃 처리
-              await AsyncStorage.removeItem('user');
-              clearUserProfile();
-              router.replace('/');
-            }
-          },
-        },
-      ]
-    );
+      },
+    ]);
   };
 
-  // 프로필 정보가 없을 경우 로딩 또는 에러 처리
   if (!userProfile) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text>프로필 정보를 불러오지 못했습니다.</Text>
+        <Text>프로필 정보를 불러오는 중입니다...</Text>
       </View>
     );
   }
@@ -71,10 +59,13 @@ export function Profile() {
     3: '3권 이상',
   };
 
-  const userStats = [
-    { label: "읽은 책", value: `${(countedBooks?.length || 0)}권` },
-    { label: "목표 독서량", value: `${userProfile.readingGoal || 0}권` },
+  const readingGoal = userProfile.readingGoal || 0;
+  const booksReadCount = countedBooks?.length || 0;
+  const progress = readingGoal > 0 ? (booksReadCount / readingGoal) * 100 : 0;
+  
+  const secondaryStats = [
     { label: "월간 독서량", value: readingAmountMap[userProfile.readingAmount] || '정보 없음' },
+    { label: "총 읽은 책", value: `${booksReadCount}권` },
   ];
 
   const menuItems = [
@@ -109,13 +100,24 @@ export function Profile() {
       <Card style={styles.card}>
         <Text style={styles.cardTitle}>독서 통계</Text>
         <View style={styles.statsContainer}>
-          {userStats.map((stat, index) => (
-            <View key={index} style={styles.statItem}>
-              <FontAwesome5 name="book-open" size={20} color="#16a34a" />
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
+          <View style={{ width: '100%' }}>
+            <View style={styles.progressLabelContainer}>
+              <Text style={styles.statLabel}>목표 달성</Text>
+              <Text style={styles.progressText}>{`${booksReadCount} / ${readingGoal}권`}</Text>
             </View>
-          ))}
+            <ProgressBar progress={progress} />
+          </View>
+          
+          <Separator style={{ marginVertical: 20 }}/>
+
+          <View style={styles.secondaryStatsContainer}>
+            {secondaryStats.map((stat, index) => (
+              <View key={index} style={styles.statItem}>
+                <Text style={styles.statValue}>{stat.value}</Text>
+                <Text style={styles.statLabel}>{stat.label}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       </Card>
 
@@ -136,7 +138,7 @@ export function Profile() {
         <Text style={styles.cardTitle}>독서 스타일</Text>
         <View style={styles.genresContainer}>
           {userProfile.readingStyle ? (
-            <Text variant="outline">{userProfile.readingStyle}</Text>
+            <Text>{userProfile.readingStyle}</Text>
           ) : (
             <Text style={styles.noGenresText}>독서 스타일이 지정되지 않았습니다.</Text>
           )}
@@ -155,7 +157,7 @@ export function Profile() {
               </View>
               <MaterialIcons name="chevron-right" size={24} color="#9ca3af" />
             </TouchableOpacity>
-            {index < menuItems.length - 1 && <Separator style={{ marginHorizontal: 16 }} />} 
+            {index < menuItems.length - 1 && <Separator style={{ marginHorizontal: 16 }} />}
           </React.Fragment>
         ))}
       </Card>
@@ -166,6 +168,7 @@ export function Profile() {
     </ScrollView>
   );
 }
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fafafa', padding: 20 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 24, paddingTop: 8 },
@@ -173,10 +176,10 @@ const styles = StyleSheet.create({
   card: { padding: 24, marginBottom: 20, borderRadius: 16 },
   cardTitle: { fontSize: 20, fontWeight: '700', marginBottom: 20, color: '#111827', letterSpacing: -0.3 },
   profileInfoContainer: { flexDirection: 'row', alignItems: 'center', gap: 18, marginBottom: 20 },
-  profileAvatar: { 
-    height: 88, 
-    width: 88, 
-    borderRadius: 44, 
+  profileAvatar: {
+    height: 88,
+    width: 88,
+    borderRadius: 44,
     backgroundColor: '#16a34a',
     shadowColor: '#16a34a',
     shadowOffset: { width: 0, height: 4 },
@@ -186,10 +189,34 @@ const styles = StyleSheet.create({
   },
   profileName: { fontSize: 22, fontWeight: '700', marginBottom: 6, color: '#111827', letterSpacing: -0.3 },
   profileEmail: { fontSize: 15, color: '#6b7280', marginBottom: 10 },
-  statsContainer: { flexDirection: 'row', justifyContent: 'space-around', gap: 20, paddingVertical: 8 },
-  statItem: { alignItems: 'center', gap: 10, minWidth: 80 },
+  statsContainer: {
+    flexDirection: 'column',
+    gap: 16,
+  },
+  secondaryStatsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  statItem: { 
+    alignItems: 'center', 
+    gap: 8,
+    flex: 1,
+  },
   statValue: { fontSize: 24, fontWeight: '700', color: '#16a34a', letterSpacing: -0.5 },
   statLabel: { fontSize: 13, color: '#6b7280', fontWeight: '500' },
+  progressLabelContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  progressText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+  },
   genresContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   noGenresText: { color: '#9ca3af', fontSize: 14, fontStyle: 'italic' },
   menuItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 18 },

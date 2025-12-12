@@ -9,7 +9,7 @@ import { submitSurvey } from '../api/survey';
 import { updateProfile } from '../api/auth';
 
 import { useBooks } from '../contexts/BookContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const READING_AMOUNTS = ['안읽음', '1~2권', '3권 이상'];
 const CATEGORIES = [

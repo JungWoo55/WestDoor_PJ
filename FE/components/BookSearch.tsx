@@ -1,12 +1,10 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
   TextInput,
   Text,
-  ActivityIndicator,
-  FlatList, // FlatList 임포트
+  FlatList, // Removed ActivityIndicator as BookItemSkeleton replaces it
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -15,14 +13,17 @@ import { BookDetailModal } from "./BookDetailModal";
 import { searchBooks } from "../api/googleBooks";
 import { useBooks } from "../contexts/BookContext";
 import { Button } from "./ui/Button";
-import { BookItem } from "./BookItem"; // BookItem 임포트
+import { BookItem } from "./BookItem";
+import { useDebounce } from "../utils/useDebounce";
+import { BookItemSkeleton } from "./BookItemSkeleton"; // Correct import location
 
 export function BookSearch() {
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 500); // 500ms delay
   const [searchResults, setSearchResults] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasSearched, setHasSearched] = useState(false); // 검색 실행 여부 상태
+  const [hasSearched, setHasSearched] = useState(false);
   
   const insets = useSafeAreaInsets();
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
@@ -33,8 +34,6 @@ export function BookSearch() {
   const handleToggleSave = (book: Book) => {
     const isSaved = allSavedIds.includes(book.id);
     if (isSaved) {
-      // 책이 이미 저장되어 있다면, 어떤 리스트에서 제거할지 결정해야 합니다.
-      // 여기서는 기본적으로 'isRead' 리스트에서 제거하도록 처리합니다.
       const isRead = readBookIds?.includes(book.id);
       removeFromLibrary(book, isRead ? 'isRead' : 'isRecom');
     } else {
@@ -42,20 +41,33 @@ export function BookSearch() {
     }
   };
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-
+  const runSearch = async (query: string) => {
     setIsLoading(true);
     setError(null);
     setHasSearched(true);
     try {
-      const books = await searchBooks(searchQuery);
+      const books = await searchBooks(query);
       setSearchResults(books || []);
     } catch (e) {
       setError("검색 중 오류가 발생했습니다.");
       console.error(e);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (debouncedSearchQuery.trim()) {
+      runSearch(debouncedSearchQuery);
+    } else {
+      setSearchResults([]);
+      setHasSearched(false);
+    }
+  }, [debouncedSearchQuery]);
+
+  const handleManualSearch = () => {
+    if (searchQuery.trim()) {
+      runSearch(searchQuery);
     }
   };
 
@@ -66,6 +78,14 @@ export function BookSearch() {
   const handleCloseModal = () => {
     setSelectedBook(null);
   };
+
+  const renderLoading = () => (
+    <View style={styles.listContentContainer}>
+      {Array.from({ length: 5 }).map((_, index) => (
+        <BookItemSkeleton key={index} />
+      ))}
+    </View>
+  );
 
   return (
     <>
@@ -78,16 +98,16 @@ export function BookSearch() {
               placeholder="책 제목, 저자 등으로 검색하세요"
               placeholderTextColor="#6b7280"
               style={styles.searchInput}
-              onSubmitEditing={handleSearch}
+              onSubmitEditing={handleManualSearch}
             />
-            <Button onPress={handleSearch} size="icon" style={styles.searchButton}>
+            <Button onPress={handleManualSearch} size="icon" style={styles.searchButton}>
               <Feather name="search" size={16} color="white" />
             </Button>
           </View>
         </View>
 
         {isLoading ? (
-          <ActivityIndicator size="large" color="#16a34a" style={{ flex: 1 }} />
+          renderLoading()
         ) : error ? (
           <View style={styles.messageContainer}>
             <Text style={styles.messageText}>{error}</Text>

@@ -1,6 +1,6 @@
 
 import React, { useState, createContext, useContext } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, type ViewProps, type TouchableOpacityProps, type TextProps } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, type ViewProps, type TouchableOpacityProps } from 'react-native';
 
 // 1. Create the context
 interface TabsContextType {

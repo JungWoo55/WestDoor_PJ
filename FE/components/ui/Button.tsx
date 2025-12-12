@@ -6,7 +6,7 @@ import {
   StyleSheet,
   type TouchableOpacityProps,
   type StyleProp,
-  type ViewStyle,
+  type ViewStyle, // eslint-disable-line @typescript-eslint/no-unused-vars
   type TextStyle,
 } from 'react-native';
 

@@ -2,33 +2,40 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Book, LibraryBookWithDetails } from '../types'; // Book 타입과 LibraryBookWithDetails 타입 모두 필요
+import { Book, LibraryBookWithDetails } from '../types';
 import { BookDetailModal } from './BookDetailModal';
 import { useBooks } from '../contexts/BookContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import { BookItem } from './BookItem';
+import { useRouter } from 'expo-router'; // Correct import location for useRouter
+import { Button } from './ui/Button';     // Correct import location for Button
+
 export function MyLibrary() {
   const insets = useSafeAreaInsets();
-  const [selectedBook, setSelectedBook] = useState<Book | null>(null); // BookDetailModal은 Book 타입을 기대하므로 유지
+  const router = useRouter(); // Correct usage of useRouter
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const { 
-    countedBooks, // count >= 1 인 책 (읽은 책)
-    savedBooks, // isRead === true 인 책 (저장한 책)
-    recommendedBooks, // isRecom === true 인 책 (추천받은 책)
+    countedBooks,
+    savedBooks,
+    recommendedBooks,
     addToLibrary, 
     removeFromLibrary, 
     markAsRead,
     decrementReadCount,
     isLoading 
   } = useBooks();
-  // BookContext에서 직접 ID를 가져오는 대신, 여기서 파생
+
   const savedBookIds = savedBooks.map(book => book.id);
   const recommendedBookIds = recommendedBooks.map(book => book.id);
+
   const handleBookPress = (book: Book) => {
     setSelectedBook(book);
   };
+
   const handleCloseModal = () => {
     setSelectedBook(null);
   };
+
   const getISBN = (book: Book): string | null => {
     if (!book || !book.volumeInfo) {
       return null;
@@ -42,6 +49,7 @@ export function MyLibrary() {
     }
     return null;
   };
+
   const handleToggleSave = async (book: Book, type: 'isRead' | 'isRecom') => {
     const isbn = getISBN(book);
     if (!isbn) {
@@ -57,6 +65,7 @@ export function MyLibrary() {
       await addToLibrary(book, type);
     }
   };
+
   const renderBookList = (
     books: LibraryBookWithDetails[], 
     type: 'isRead' | 'isRecom', 
@@ -98,11 +107,19 @@ export function MyLibrary() {
           <View style={styles.emptyContainer}>
             <FontAwesome name="bookmark-o" size={48} color="#9ca3af" />
             <Text style={styles.emptyText}>{emptyMessage}</Text>
+            {/* Add Button */}
+            <Button
+              variant="outline"
+              onPress={() => router.push('/(tabs)/search')} // Navigate to search tab
+            >
+              <Text>책 검색하러 가기</Text>
+            </Button>
           </View>
         )}
       />
     );
   }
+
   return (
     <>
       <View style={[styles.container, { paddingTop: insets.top }]}> 
@@ -148,6 +165,7 @@ export function MyLibrary() {
     </>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

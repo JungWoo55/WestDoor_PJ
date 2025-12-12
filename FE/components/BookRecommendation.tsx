@@ -5,7 +5,6 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,11 +13,53 @@ import { BookDetailModal } from './BookDetailModal';
 import { useBooks } from '../contexts/BookContext';
 import { searchBooks } from '../api/googleBooks';
 import { BookItem } from './BookItem';
+import { BookItemSkeleton } from './BookItemSkeleton';
 
 export function BookRecommendation() {
   const insets = useSafeAreaInsets();
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
-  const { addToLibrary, removeFromLibrary, readBookIds, recomBookIds } = useBooks();
+  const { userProfile, addToLibrary, removeFromLibrary, readBookIds, recomBookIds } = useBooks();
+
+  const [recommendations, setRecommendations] = useState<{ [key: string]: Book[] }>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const genresToFetch = React.useMemo(() => 
+    userProfile?.favoriteGenres && userProfile.favoriteGenres.length > 0
+      ? userProfile.favoriteGenres
+      : ['자기계발', '소설'],
+  [userProfile]);
+
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (!userProfile) {
+        setIsLoading(true);
+        return;
+      }
+      
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const promises = genresToFetch.map(genre => searchBooks(genre));
+        const results = await Promise.all(promises);
+
+        const newRecommendations: { [key: string]: Book[] } = {};
+        genresToFetch.forEach((genre, index) => {
+          newRecommendations[genre] = results[index] || [];
+        });
+
+        setRecommendations(newRecommendations);
+      } catch (e) {
+        setError('추천 도서 목록을 가져오는 데 실패했습니다.');
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRecommendations();
+  }, [userProfile, genresToFetch]);
 
   const handleToggleSave = (book: Book) => {
     const allSavedIds = [...(readBookIds || []), ...(recomBookIds || [])];
@@ -30,32 +71,6 @@ export function BookRecommendation() {
       addToLibrary(book, 'isRead');
     }
   };
-  const [selfHelpBooks, setSelfHelpBooks] = useState<Book[]>([]);
-  const [fictionBooks, setFictionBooks] = useState<Book[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchRecommendations = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const [selfHelpResult, fictionResult] = await Promise.all([
-          searchBooks('자기계발'),
-          searchBooks('소설'),
-        ]);
-        setSelfHelpBooks(selfHelpResult || []);
-        setFictionBooks(fictionResult || []);
-      } catch (e) {
-        setError('추천 도서 목록을 가져오는 데 실패했습니다.');
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchRecommendations();
-  }, []);
 
   const handleBookPress = (book: Book) => {
     setSelectedBook(book);
@@ -68,7 +83,7 @@ export function BookRecommendation() {
   const renderSection = (title: string, data: Book[]) => {
     const allSavedIds = [...(readBookIds || []), ...(recomBookIds || [])];
     return (
-      <View style={styles.section}>
+      <View style={styles.section} key={title}>
         <View style={styles.subSectionHeader}>
           <Text style={styles.subHeaderTitle}>{title}</Text>
         </View>
@@ -91,7 +106,29 @@ export function BookRecommendation() {
         />
       </View>
     );
-  }
+  };
+
+  const renderSkeletonSection = (title: string) => {
+    return (
+      <View style={styles.section} key={title}>
+        <View style={styles.subSectionHeader}>
+          <Text style={styles.subHeaderTitle}>{title}</Text>
+        </View>
+        <FlatList
+          horizontal
+          data={Array.from({ length: 3 })}
+          keyExtractor={(_, index) => index.toString()}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalScroll}
+          renderItem={() => (
+            <View style={{ width: 280 }}>
+              <BookItemSkeleton />
+            </View>
+          )}
+        />
+      </View>
+    );
+  };
 
   const allSavedIds = [...(readBookIds || []), ...(recomBookIds || [])];
 
@@ -104,13 +141,16 @@ export function BookRecommendation() {
         </View>
 
         {isLoading ? (
-          <ActivityIndicator size="large" color="#16a34a" style={{ marginTop: 40 }}/>
+          <>
+            {genresToFetch.map(genre => renderSkeletonSection(`'${genre}' 추천 도서`))}
+          </>
         ) : error ? (
           <Text style={styles.errorText}>{error}</Text>
         ) : (
           <>
-            {renderSection('인기 자기계발서', selfHelpBooks)}
-            {renderSection('화제의 소설', fictionBooks)}
+            {Object.entries(recommendations).map(([genre, books]) => 
+              books.length > 0 ? renderSection(`'${genre}' 추천 도서`, books) : null
+            )}
           </>
         )}
       </ScrollView>

@@ -1,4 +1,3 @@
-
 import api from './index';
 
 /**
@@ -52,7 +51,7 @@ export const removeBookFromLibrary = async (isbn: string, page: 'isRead' | 'isRe
  */
 export const markBookAsRead = async (isbn: string) => {
     try {
-      const response = await api.patch('/library', { isbn });
+      const response = await api.patch('/library', {isbn});
       return response.data;
     } catch (error) {
       console.error('Error marking book as read:', error);

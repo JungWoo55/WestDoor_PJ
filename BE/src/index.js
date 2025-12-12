@@ -4,7 +4,7 @@ import { setupSwagger } from "./config/swagger.js";
 import router from "./router/router.js";
 import {setupCommonError, setupExpress} from "./config/express.js";
 import cookieParser from "cookie-parser";
-
+ 
 const app = setupExpress();
 const port = process.env.PORT;
 

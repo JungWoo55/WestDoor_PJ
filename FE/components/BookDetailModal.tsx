@@ -37,6 +37,10 @@ export function BookDetailModal({ book, visible, onClose, onToggleSave, isSaved 
   if (!book) {
     return null;
   }
+  const imageUrl = book.volumeInfo.imageLinks?.thumbnail;
+  const coverImage = imageUrl
+    ? imageUrl.replace(/^http:/, 'https:')
+    : 'https://via.placeholder.com/110x160.png?text=No+Image';
 
   return (
     <Modal
@@ -55,7 +59,7 @@ export function BookDetailModal({ book, visible, onClose, onToggleSave, isSaved 
 
           {/* --- Fixed Header --- */}
           <View style={styles.fixedHeader}>
-            <Image source={{ uri: book.volumeInfo.imageLinks?.thumbnail || 'https://via.placeholder.com/110x160.png?text=No+Image' }} style={styles.coverImage} />
+            <Image source={{ uri: coverImage }} style={styles.coverImage} />
             <View style={styles.headerInfo}>
               <Text style={styles.title} numberOfLines={3}>{book.volumeInfo.title}</Text>
               <Text style={styles.author}>{book.volumeInfo.authors?.join(', ')}</Text>
